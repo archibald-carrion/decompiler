@@ -60,15 +60,24 @@ def plot_cumulative_distribution(line_counts, title="Cumulative Distribution of 
     plt.show()
 
 if __name__ == "__main__":
-    filepath = 'data/train_synth_compilable/data_0_time1677787985_default.jsonl.zst'
-    if not os.path.exists(filepath):
-        print(f"Error: File not found at {filepath}")
-    else:
-        function_defs = extract_function_definitions(filepath)
-        if function_defs:
-            line_counts = analyze_lines_of_code(function_defs)
+    folder_path = 'data/train_real_simple_io/'
+    filepaths = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.endswith('.jsonl.zst')]
 
-            print(f"Total number of function definitions found: {len(function_defs)}")
+    if not filepaths:
+        print(f"Error: No .jsonl.zst files found in the folder {folder_path}")
+    else:
+        all_function_defs = []
+        for filepath in filepaths:
+            if os.path.exists(filepath):
+                function_defs = extract_function_definitions(filepath)
+                all_function_defs.extend(function_defs)
+            else:
+                print(f"Error: File not found at {filepath}")
+
+        if all_function_defs:
+            line_counts = analyze_lines_of_code(all_function_defs)
+
+            print(f"Total number of function definitions found: {len(all_function_defs)}")
             print(f"Summary of line counts:")
             print(f"  Mean: {np.mean(line_counts):.2f}")
             print(f"  Median: {np.median(line_counts):.2f}")
@@ -81,4 +90,4 @@ if __name__ == "__main__":
             plot_line_count_boxplot(line_counts)
             plot_cumulative_distribution(line_counts)
         else:
-            print("No function definitions found in the file.")
+            print("No function definitions found in the files.")

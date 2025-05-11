@@ -1,4 +1,6 @@
-# Exploratory Data Analysis (EDA) of [ExeBench Dataset](https://huggingface.co/datasets/jordiae/exebench)
+# 📁 EDA – Exploratory Data Analysis of [ExeBench Dataset](https://huggingface.co/datasets/jordiae/exebench)
+
+> This folder contains scripts for performing **exploratory data analysis** (EDA) on the dataset of C functions and their corresponding assembly representations used for the machine learning decompilation project.
 
 ## What is EDA?
 
@@ -13,7 +15,7 @@ Exploratory Data Analysis (EDA) is an approach to analyzing datasets to summariz
 
 EDA is often an iterative process. You might start with a broad overview and then zoom in on specific aspects as you uncover interesting findings. It involves a combination of statistical summaries and graphical techniques.
 
-## Why is EDA Useful for Understanding a Dataset?
+### Why is EDA Useful for Understanding a Dataset?
 
 Working with a new dataset without performing EDA is like trying to build a house without looking at the blueprints or inspecting the materials. You might be able to put something together, but you're likely to encounter problems down the line. Here's why EDA is crucial for understanding a dataset:
 
@@ -33,7 +35,98 @@ Working with a new dataset without performing EDA is like trying to build a hous
 
 **In essence, EDA helps you become intimately familiar with your data. It transforms a collection of numbers and text into a story you can understand and use to answer meaningful questions or build effective solutions.** By investing time in EDA, you lay a solid foundation for more rigorous analysis and ultimately achieve more reliable and insightful results.
 
-## EDA of ExeBench Dataset
-### Line of code (LOC) Distribution
-Note: for the moment we are only analyzing the 'data/train_synth_compilable/data_0_time1677787985_default.jsonl.zst' file. In the future we must analyze all the files in the dataset.
-Also, the graph are not very informative, it should be improved before actually using it.
+Absolutely, partner! Here's a `README.md` for the `EDA/` folder of your ML project on **decompiling C functions from assembly**, listing important analyses to guide your exploratory data analysis. It includes what you've already done (lines of code) and suggests additional valuable directions.
+
+---
+
+## 📌 Current and Planned Analyses
+
+### ✅ `lines_of_code_analysis.py`
+
+* Extracts function definitions from compressed `.jsonl.zst` files
+* Calculates number of lines of code per function
+* Plots:
+
+  * Histogram of line counts
+  * Box plot
+  * Cumulative distribution function (CDF)
+
+---
+
+## 🔍 Suggested Future Analyses
+
+> Each of these should have its own script and visualization, and can be used to inform preprocessing, filtering, or model design.
+
+### 1. `token_count_analysis.py`
+
+* Count number of tokens per function (via `tokenize` or `tree-sitter`)
+* Useful for understanding model input length
+* Visualizations: histogram, CDF
+
+### 2. `cyclomatic_complexity_analysis.py`
+
+* Estimate cyclomatic complexity of each C function
+* Helps identify how complex the control flow is
+* Tool: `lizard`, `radon`, or a custom parser
+
+### 3. `identifier_entropy_analysis.py`
+
+* Measure the diversity and frequency of identifiers (e.g., variable names)
+* Useful for understanding naming patterns, obfuscation, or boilerplate
+
+### 4. `assembly_size_analysis.py`
+
+* Compare C function length vs. corresponding assembly instruction count
+* Insight into binary expansion rate
+* Could help in learning compression mapping
+
+### 5. `function_type_distribution.py`
+
+* Classify functions by type (e.g., I/O, math, control, string)
+* Count and visualize their distribution
+
+### 6. `syntax_structure_analysis.py`
+
+* Analyze frequency of specific syntax patterns (e.g., if, for, while, switch)
+* Good for feature engineering
+
+### 7. `comment_density_analysis.py`
+
+* If comments are included, compute ratio of comment lines to code lines
+* Insight into documentation or code quality
+
+### 8. `outlier_detection.py`
+
+* Detect functions with extreme values in line count, token count, etc.
+* Helps clean or filter noisy training examples
+
+### 9. `duplicate_function_analysis.py`
+
+* Identify near-duplicate or identical functions (e.g., via hashing or Levenshtein)
+* Useful for deduplication or data leakage detection
+
+---
+
+## 📦 EDA folder Structure
+
+```plaintext
+EDA/
+├── README.md
+└── line_of_code
+    └── line_of_code.py
+```
+
+---
+
+## 📈 Tools and Libraries Recommended
+
+* `matplotlib`, `seaborn` – for visualization
+* `numpy`, `pandas` – for data manipulation
+* `lizard` – for code complexity metrics
+* `tree-sitter`, `pycparser` – for code parsing
+* `difflib`, `hashlib` – for similarity detection
+
+## Setup
+Apart from the libraries mentioned above, you may need to download the dataset, instructions for which can be found in the `examples/README.md` file.
+
+

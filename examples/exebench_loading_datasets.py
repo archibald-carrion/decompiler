@@ -50,6 +50,6 @@ def read_and_write_function_definitions(filepath, output_txt):
 # TODO: export eahc function in a separate file instead of one txt file
 
 read_and_write_function_definitions(
-    'data/train_synth_compilable/data_0_time1677787985_default.jsonl.zst',
+    'data/train_real_simple_io/data_0_time1677794311_default.jsonl.zst',
     'function_definitions_output.txt'
 )
