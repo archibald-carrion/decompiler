@@ -112,8 +112,14 @@ Absolutely, partner! Here's a `README.md` for the `EDA/` folder of your ML proje
 ```plaintext
 EDA/
 ├── README.md
-└── line_of_code
-    └── line_of_code.py
+├── assembly_and_compiler_analysis
+│   ├── README.md
+│   ├── assembly_and_compiler_analysis.py
+│   └── pattern_legend.txt
+├── line_of_code
+│   └── line_of_code.py
+└── summary_dataset
+    └── summary.py
 ```
 
 ---

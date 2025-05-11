@@ -7,6 +7,9 @@ from collections import Counter, defaultdict
 import pandas as pd
 import seaborn as sns
 
+# Get the directory where the script is located
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
 def extract_assembly_info(filepath):
     """Reads a .jsonl.zst file and extracts assembly information."""
     entries = []
@@ -195,10 +198,11 @@ def plot_compiler_statistics(compiler_counts, arch_counts, opt_level_counts):
     ax3.set_ylabel('Count')
     
     plt.tight_layout()
-    plt.savefig('compiler_statistics.png')
+    output_path = os.path.join(SCRIPT_DIR, 'compiler_statistics.png')
+    plt.savefig(output_path)
     plt.close()
     
-    return 'compiler_statistics.png'
+    return output_path
 
 def plot_asm_size_boxplot(sizes):
     """Plot a boxplot of assembly code sizes by optimization level."""
@@ -217,10 +221,11 @@ def plot_asm_size_boxplot(sizes):
     plt.xlabel('Optimization Level')
     plt.grid(True, axis='y', alpha=0.3)
     
-    plt.savefig('asm_size_boxplot.png')
+    output_path = os.path.join(SCRIPT_DIR, 'asm_size_boxplot.png')
+    plt.savefig(output_path)
     plt.close()
     
-    return 'asm_size_boxplot.png'
+    return output_path
 
 def plot_optimization_effect(df):
     """Plot the effect of optimization on assembly size."""
@@ -244,10 +249,11 @@ def plot_optimization_effect(df):
     plt.xlabel('Compiler')
     
     plt.tight_layout()
-    plt.savefig('optimization_effect.png')
+    output_path = os.path.join(SCRIPT_DIR, 'optimization_effect.png')
+    plt.savefig(output_path)
     plt.close()
     
-    return 'optimization_effect.png'
+    return output_path
 
 def plot_pattern_distribution(pattern_counts):
     """Plot the distribution of configuration patterns."""
@@ -268,15 +274,17 @@ def plot_pattern_distribution(pattern_counts):
     plt.xlabel('Pattern')
     
     plt.tight_layout()
-    plt.savefig('pattern_distribution.png')
+    output_path = os.path.join(SCRIPT_DIR, 'pattern_distribution.png')
+    plt.savefig(output_path)
     plt.close()
     
     # Create a legend explaining the patterns
-    with open('pattern_legend.txt', 'w') as f:
+    legend_path = os.path.join(SCRIPT_DIR, 'pattern_legend.txt')
+    with open(legend_path, 'w') as f:
         for i, (pattern, count) in enumerate(top_patterns):
             f.write(f"Pattern {i+1}: {pattern} (Count: {count})\n")
     
-    return 'pattern_distribution.png'
+    return output_path
 
 def parse_asm_size(asm_entries):
     """Parse assembly size information for each entry."""
