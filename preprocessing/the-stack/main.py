@@ -166,8 +166,9 @@ def assemble(input_dir: str, output_dir: str, flags: str = "", do_stats: bool = 
                         f"\n{err}", file=sys.stderr)
             
             # Try to assemble it
+            # TODO: Fix invocation so assembly is readable
             result = subprocess.run(
-                ["gcc", "-x", "c", "-s", input_path, "-o", output_path, flags],
+                ["gcc", "-s", input_path, "-o", output_path, flags],
                 capture_output = True, text=True
             )
 
