@@ -1,2 +1,18 @@
 train_synth_compilable/
 *.pyc
+
+# Python packaging
+.Python
+lib/
+lib64/
+sdist/
+include/
+.installed.cfg
+
+# Python virtual environments
+.env
+.venv
+venv/
+venv.bak/
+pyvenv.cfg
+bin/
