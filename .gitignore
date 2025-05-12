@@ -16,3 +16,6 @@ venv/
 venv.bak/
 pyvenv.cfg
 bin/
+
+# Python cache
+__pycache__/
