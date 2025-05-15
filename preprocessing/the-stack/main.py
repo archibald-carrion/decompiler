@@ -9,14 +9,17 @@ from math import inf, ceil # Quick progress bar math
 from datasets import load_dataset # HuggingFace downloading API
 from huggingface_hub import login # HuggingFace auth API
 
-def download(output_dir: str, max_size: int, unit: str, max_files: int = inf, do_stats: bool = False):
+# TODO: Crashes after use. Fatal Python error: PyGILState_Release 
+# Note: This doesn't seem to hurt the end result
+# Check https://github.com/huggingface/datasets/issues/7357
+def download(output_dir: str, max_size: int, unit: str, max_files: int = inf, stats_out: str|None = None):
     """Downloads the contents of files inside the Stack's dataset
     Arguments:
         output_dir (str): Directory to put files into
         max_size (int): Greatest size (in units of choice) to allow for the entire set download
         unit (str): Unit of choice (KB|MB|GB) to use for measuring maximum allowed size (and progress)
-        max_files (int | inf): Greatest amount of individual files allowed to be downloaded. Defaults to inf.
-        do_stats (bool): Whether to collect or not EDA statistics on file size. Defaults to False.
+        max_files (int | inf, optional): Greatest amount of individual files allowed to be downloaded. Defaults to inf.
+        stats_out (str | None, optional): Filepath to output statistics to. Default to None
     """
 
     # Keep track of conversion factors for each unit to bytes
@@ -27,6 +30,7 @@ def download(output_dir: str, max_size: int, unit: str, max_files: int = inf, do
     assert unit in unit_conversion, "Size unit should be GB, MB or KB"
     assert (isinstance(max_size, int) or isinstance(max_size, int)) and max_size > 0, "Maximum size should be a positive number"
     assert isinstance(max_files, int) or max_files == inf, "Maximum amount of files should be a positive integer"
+    assert isinstance(stats_out, str) or stats_out == None, "Filepath to output statistics should be a string or None"
 
     # Create the output directory if not already present
     try:
@@ -49,12 +53,11 @@ def download(output_dir: str, max_size: int, unit: str, max_files: int = inf, do
     print("Downloading c source files, with at most", max_size, unit + "s of content")
 
     # Keep track of stats if desired
-    if do_stats:
-        sizes = pd.DataFrame(
-            data = {
-                'C': [] if max_files == inf else np.full(max_files, np.nan)  
-            }
-        )
+    if stats_out != None:
+        stats = pd.DataFrame(data={
+            "Successful": pd.Categorical(values=[], categories=[True,False], ordered=True), 
+            "Bytes": pd.array(data=[], dtype=pd.Int32Dtype())
+        })
 
     with tqdm(total=max_size, unit=unit, file=sys.stdout) as pbar:
         pbar.set_description("Downloading contents")
@@ -77,76 +80,96 @@ def download(output_dir: str, max_size: int, unit: str, max_files: int = inf, do
             pbar.set_postfix_str(f"#{i+1}: {filename} ({round(size, 2)} {unit}s)")
 
             # Write its contents
-            # If any meaningful error occurs, abort downloading the remaining files 
+            # If any meaningful error occurs, recover and continue downloading the remaining files
+            write_success = True
             try:
                 with open(filepath, "w", encoding="utf-8") as f:
                     try:
                         f.write(content)
                     except (IOError, OSError) as err:
                         print(f"Error writing file #{i+1} contents:", err, file=sys.stderr)
-                        f.close()
-                        continue
+                        write_success = False
             except (FileNotFoundError, PermissionError, OSError) as err:
                 print(f"Error opening file #{i+1}:", err, file=sys.stderr)
-                f.close()
-                continue
+                write_success = False
             
             f.close()
 
             # Update the total size and total file count
-            downloaded_files += 1
-            total_size += size
+            if write_success:
+                downloaded_files += 1
+                total_size += size
 
-            pbar.update(int(total_size) - progress_delta 
-                if max_size > total_size + size else max_size - progress_delta)
-            progress_delta = int(total_size)
+                pbar.update(int(total_size) - progress_delta 
+                    if max_size > total_size + size else max_size - progress_delta)
+                progress_delta = int(total_size)
 
             # Keep track of statistics if desired
-            if do_stats:
-                sizes.loc[i, "C"] = len(content.encode("utf-8"))
+            if stats_out != None:
+                stats.loc[i, "Successful"] = write_success
+                stats.loc[i, "Bytes"] = len(content.encode("utf-8")) if write_success else int(0)
 
     # Report findings
-    print(f"Downloaded {downloaded_files} files (~{round(total_size, 2)} {unit}s) to '{output_dir}'")
-    if do_stats:
-        print(f"Statistics for content sizes (bytes):")
-        print(sizes.describe())
+    print(f"Downloaded {downloaded_files}" + ("" if max_files == inf else f"/{max_files}") + 
+        f" files to '{output_dir}'")
+    print(f"Used ~{round(total_size, 2)}/{max_size} {unit}s (~{round((total_size / max_size) * 100, 2)}%) of storage")
 
-def assemble(input_dir: str, output_dir: str, flags: str = "", do_stats: bool = False):
+    if stats_out != None:
+        print("Statistics:")
+        print(stats.describe(include="all"))
+
+        print(f"Saving table to {stats_out}...")
+        try:
+            stats.to_csv(path_or_buf=stats_out, mode="w")
+        except Exception as err:
+            print(f"Unable to save statistics: {err}")
+
+    return
+
+def assemble(input_dir: str, output_dir: str, flags: str = "", stats_out: str|None = None):
     """Assembles C files inside a given directory onto another directory
 
     Args:
         input_dir (str): Directory where C files to assemble reside directly under
         output_dir (str): Directory to place resulting assemblies under
         flags (str, optional): Extra flags passed to _gcc_. Defaults to "".
-        do_stats (bool, optional): Whether or not to collect basic EDA statistics on file sizes. Defaults to False.
+        stats_out (str | None, optional): Whether or not to collect basic EDA statistics on file sizes. Defaults to None.
     """
     # Check valid input and output directory
     assert os.path.isdir(input_dir), "Input path should be an existing directory"
     assert isinstance(output_dir, str), "Output path should be a string"
     assert isinstance(flags, str), "GCC flags should be a string"
+    assert isinstance(stats_out, str) or stats_out == None, "Filepath to output statistics should be a string or None"
 
     # Create the output directory if not already present
     try:
         os.makedirs(output_dir, exist_ok=True)
-    except err:
+    except Exception as err:
         print("Unable to access directory path:", err)
 
     # For each file ending in *.c directly under the directory, assemble it
     sources = list(filter(lambda f: f.endswith(".c"), os.listdir(input_dir)))
-    
+
+    # If there are no files are left to assemble, abort
+    if (len(sources) == 0):
+        print(f"No files ending in *.c under '{input_dir}'. Aborting")
+        return
+
     # Keep track of successes
     assembled: int = 0
 
     # Keep track of stats if desired
-    if do_stats:
-        sizes = pd.DataFrame(
+    if stats_out != None:
+        stats = pd.DataFrame(
             data = {
-                'C': np.full(len(sources), np.nan), 
-                'Assembly': np.full(len(sources), np.nan)
+                'C filename': pd.array(data=[], dtype=pd.StringDtype()), 
+                'x86 filename': pd.array(data=[], dtype=pd.StringDtype()),
+                "Successful": pd.Categorical(values=[], categories=[True,False], ordered=True), 
+                "Assembly bytes": pd.array(data=[], dtype=pd.Int32Dtype())
             }
         )
 
-    with tqdm(total=len(sources), unit="files", file=sys.stdout) as pbar:
+    with tqdm(total=len(sources), unit=" files", file=sys.stdout) as pbar:
         pbar.set_description("Assembling files")
         for i, filename in enumerate(sources):
             # Keep track of the path of the source code, and the destination of its assembly
@@ -157,50 +180,64 @@ def assemble(input_dir: str, output_dir: str, flags: str = "", do_stats: bool = 
 
             pbar.set_postfix_str(f"#{i+1}: {filename}")
 
-            # Check size of source
-            if do_stats:
-                try:
-                    sizes.loc[i, "C"] = os.path.getsize(input_path)
-                except err:
-                    print(f"Could not check size of source file at {input_path}:"
-                        f"\n{err}", file=sys.stderr)
-            
             # Try to assemble it
             # TODO: Fix invocation so assembly is readable
             result = subprocess.run(
-                ["gcc", "-s", input_path, "-o", output_path, flags],
+                ["gcc", "-c", "-S", input_path, "-o", output_path, flags],
                 capture_output = True, text=True
             )
 
             # Report and keep track of success
             if result.returncode == 0:
                 assembled += 1
-
-                # Check size of assembled result
-                if do_stats:
-                    try:
-                        sizes.loc[i, "Assembly"] = os.path.getsize(output_path)
-                    except err:
-                        print(f"Could not check size of assembled file at {output_path}:"
-                            f"\n{err}", file=sys.stderr)
                     
             else:
                 print(f"Could not assemble {filename}:\n{result.stderr}", file=sys.stderr)
-            
+
             pbar.update(1)
+
+            # Keep track of statistics
+            if stats_out:
+                # Add pair
+                stats.loc[i, "C filename"] = filename
+                stats.loc[i, "x86 filename"] = filename.rsplit(".", 1)[0] + ".s"
+
+                # Check success
+                stats.loc[i, "Successful"] = result.returncode == 0
+
+                # Check size of assembled result
+                if result.returncode == 0:
+                    try:
+                        stats.loc[i, "Assembly bytes"] = os.path.getsize(output_path)
+                    except Exception as err:
+                        stats.loc[i, "Assembly bytes"] = np.nan
+
+                        print(f"Could not check size of assembled file at {output_path}:"
+                            f"\n{err}", file=sys.stderr)
+
+                else:
+                    stats.loc[i, "Assembly bytes"] = np.nan
     
     # Report findings
-    print(f"Assembled succesfully {assembled}/{len(sources)} ({round(assembled/len(sources) * 100)}%)")
+    print(f"Assembled succesfully {assembled}/{len(sources)} files (~{round(assembled/len(sources) * 100)}%)")
     
-    if do_stats:
-        print("Statistics for content sizes (bytes):")
-        print(sizes.describe())
+    if stats_out != None:
+        print("Statistics:")
+        print(stats.describe(include="all"))
+
+        print(f"Saving table to {stats_out}...")
+        try:
+            stats.to_csv(path_or_buf=stats_out, mode="w")
+        except Exception as err:
+            print(f"Unable to save statistics: {err}")
+
+    return
 
 if __name__ == "__main__":
     # Register arguments
     parser = argparse.ArgumentParser(description='Download and assemble source c files from The Stack')
-    parser.add_argument('--size-stats', required=False, action='store_true', 
-        help='Whether or not to calculate brief statistics for the size of the files')
+    parser.add_argument('--stats', required=False, default=None, 
+        help='Path to file in which to store brief statistics for the process')
     
     # Add subcommands: download / assemble
     command_parsers = parser.add_subparsers(dest='mode', required=True, 
@@ -238,10 +275,10 @@ if __name__ == "__main__":
 
     if (args.mode == "download"):
         print("Downloading files...")
-        download(args.dir, args.max_size, args.unit, args.max_files, args.size_stats)
+        download(args.dir, args.max_size, args.unit, args.max_files, args.stats)
     elif (args.mode == "assemble"):
         print("Assembling files...")
-        assemble(args.input_dir, args.output_dir, args.flags, args.size_stats)
+        assemble(args.input_dir, args.output_dir, args.flags, args.stats)
     else:
         print("Unknown command passed", file=sys.stderr)
 

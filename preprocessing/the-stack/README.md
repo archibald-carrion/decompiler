@@ -37,7 +37,7 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  --size-stats          Whether or not to calculate brief statistics for the size of the files
+  --stats               Path to file in which to store brief statistics for the process
 ```
 
 Check usage reference for downloading via `python -m main <download|do|d> -h`
@@ -76,9 +76,9 @@ For downloading unlimited source files with a net size of at most 10 GB into the
 python -m main download sources 10 GB
 ```
 
-For something as similar as before, but limiting up to 500 files, and printing their statistics
+For something as similar as before, but limiting up to 500 files, and collecting their statistics
 ```bash
-python -m main --size-stats download --max-files 500 sources 10 GB
+python -m main --stats stats.csv download --max-files 500 sources 10 GB
 ```
 
 For assembling all source files under the `sources` folder into the `assemblies` folder:
@@ -86,9 +86,9 @@ For assembling all source files under the `sources` folder into the `assemblies`
 python -m main assemble sources assemblies
 ```
 
-For something as similar as before, but printing their statistics and adding extra flags to `gcc`
+For something as similar as before, but collecting their statistics and adding extra flags to `gcc`
 ```bash
-python -m main --size-stats assemble --flags "-Wa,-L -Wall" sources assemblies
+python -m main --stats stats.csv --flags "-Wa,-L -Wall" sources assemblies
 ```
 
 ## Notes
@@ -100,7 +100,7 @@ shell of choice.
 For example, on `zsh` or `bash`, one might do the following to redirect compilation error reports
 to their own `error.log` file 
 ```bash
-python -m main --size-stats asm ./download ./compile 2> error.log
+python -m main --stats stats.csv asm ./download ./asm 2> error.log
 ```
 
 Aditionally, we rely on `gcc` reported return value as a signal of assembly success / failure.
