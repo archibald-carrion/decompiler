@@ -1,2 +1,3 @@
 train_synth_compilable/
 *.pyc
+structured_output/
