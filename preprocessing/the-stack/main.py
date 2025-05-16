@@ -183,7 +183,7 @@ def assemble(input_dir: str, output_dir: str, flags: str = "", stats_out: str|No
             # Try to assemble it
             # TODO: Fix invocation so assembly is readable
             result = subprocess.run(
-                ["gcc", "-c", "-S", input_path, "-o", output_path, flags],
+                ["gcc", "-march=x86-64", "-c", "-S", input_path, "-o", output_path, flags],
                 capture_output = True, text=True
             )
 
