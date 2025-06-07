@@ -1,0 +1,23 @@
+%%{init: {"theme": "default", "themeVariables": {"background": "#ffffff"}}}%%
+graph TD
+    A[Inicio del Proyecto] --> B[Revisión del Problema]
+    B --> C[Obtención de Datos]
+    C --> C1[Dataset: ExeBench]
+    C --> C2[Dataset: The Stack]
+    C1 --> D[Filtrado y Selección de Funciones]
+    C2 --> D
+    D --> E[Generación de Ensamblador x86]
+    E --> F[Emparejamiento C-ASM]
+    F --> G[Estructuración del Dataset]
+    G --> G1[c/ - funciones en C]
+    G --> G2[asm/ - funciones en ensamblador]
+    G --> G3[mappings.csv - metadata]
+    G --> H[Análisis EDA]
+    H --> H1[Líneas de Código]
+    H --> H2[Complejidad Ciclomática Lizard]
+    H --> H3[Distribución de tamaños]
+    H --> I[Investigación de Modelos]
+    I --> I1[Exploración de modelos en Hugging Face]
+    I --> I2[Evaluación de arquitecturas preentrenadas]
+    I --> J[Próximo paso: Fine-Tuning y Entrenamiento]
+    J --> K[Evaluación de Resultados]
