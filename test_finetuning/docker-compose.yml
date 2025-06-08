@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  roman-empire-training:
+    build: .
+    container_name: roman-empire-finetuning
+    volumes:
+      # Persist models on host
+      - ./models:/app/models
+      # Cache for faster subsequent runs
+      - ./cache:/app/cache
+    environment:
+      - TF_ENABLE_ONEDNN_OPTS=0
+      - PYTHONUNBUFFERED=1
+      - HF_HOME=/app/cache
+    # Remove container after it stops
+    # Note: This is handled by the wrapper script
+    stdin_open: true
+    tty: true
+    # Default command (can be overridden)
+    command: ["python", "roman_empire_finetune.py", "--help"]
+    
+    # Optional: GPU support (uncomment if you have NVIDIA GPU)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
