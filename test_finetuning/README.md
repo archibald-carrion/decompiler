@@ -75,6 +75,7 @@ test_finetuning/
 │       ├── training_args.bin
 │       ├── training_info.json
 │       └── vocab.json
+├── prompt_model_comparison.py
 ├── prompt_poc_post_tuning.py
 ├── prompt_poc_pre_tuning.py
 ├── requirements.txt
@@ -82,6 +83,7 @@ test_finetuning/
 └── run_roman_training.sh
 ```
 
+## Model Usage
 ### Testing the prompt of the fine-tuned model
 ```bash
 python prompt_poc_post_tuning.py --prompt "The Roman empire is"
@@ -89,6 +91,15 @@ python prompt_poc_post_tuning.py --prompt "The Roman empire is"
 ### Testing the prompt of the base model
 ```bash
 python prompt_poc_pre_tuning.py --prompt "The Roman empire is"
+```
+### Testing both models
+Using the `prompt_model_comparison.py` script, you can compare the outputs of both the base and fine-tuned models for a set of prompts.
+```bash
+python prompt_model_comparison.py --prompt-file prompts.txt --output-json results.json
+```
+Or for a single prompt:
+```bash
+python prompt_model_comparison.py --prompt "The Roman Empire was" --output-json results.json
 ```
 
 ## 💾 Model Persistence
