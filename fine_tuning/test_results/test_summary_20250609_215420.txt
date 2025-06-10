@@ -1,0 +1,15 @@
+Assembly Decompiler Model Comparison Report
+==================================================
+Generated: 2025-06-09 21:54:20
+
+Samples tested: 30
+Base model avg token overlap: 0.019
+Fine-tuned avg token overlap: 0.019
+Token overlap improvement: -1.2%
+
+Key Improvements:
+  token_overlap: -1.2%
+  length_ratio: +10.6%
+  keyword_coverage: +31.0%
+  token_precision: +30.8%
+  generation_speed: +6.9%

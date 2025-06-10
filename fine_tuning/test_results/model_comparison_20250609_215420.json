@@ -1,0 +1,164 @@
+{
+  "base_model": {
+    "model_name": "Base DistilGPT2",
+    "total_samples": 30,
+    "total_generation_time": 272.0082232952118,
+    "avg_generation_time": 9.06694077650706,
+    "total_tokens_generated": 10022,
+    "avg_tokens_per_sample": 334.06666666666666,
+    "aggregate_metrics": {
+      "length_ratio": {
+        "mean": 0.786175823693307,
+        "median": 0.3513806991557087,
+        "std": 1.0757709489921123,
+        "min": 0.0,
+        "max": 4.318897637795276
+      },
+      "line_ratio": {
+        "mean": 0.0626734305775209,
+        "median": 0.020918367346938777,
+        "std": 0.11426645496521765,
+        "min": 4.1564487302049126e-05,
+        "max": 0.5652173913043478
+      },
+      "token_overlap": {
+        "mean": 0.018921126110487376,
+        "median": 0.0,
+        "std": 0.04191396947905912,
+        "min": 0.0,
+        "max": 0.1875
+      },
+      "token_precision": {
+        "mean": 0.042100586632009926,
+        "median": 0.0,
+        "std": 0.08705738671127394,
+        "min": 0.0,
+        "max": 0.4444444444444444
+      },
+      "keyword_coverage": {
+        "mean": 0.08055555555555556,
+        "median": 0.0,
+        "std": 0.15702473957247412,
+        "min": 0.0,
+        "max": 0.5833333333333334
+      },
+      "keyword_match_ratio": {
+        "mean": 0.2783333333333333,
+        "median": 0.0,
+        "std": 0.6629913055722283,
+        "min": 0.0,
+        "max": 3.0
+      },
+      "brace_ratio": {
+        "mean": 1.327047619047619,
+        "median": 0.0,
+        "std": 5.188646987000748,
+        "min": 0.0,
+        "max": 27.5
+      },
+      "semicolon_ratio": {
+        "mean": 0.16879679388300078,
+        "median": 0.0,
+        "std": 0.4430238574275135,
+        "min": 0.0,
+        "max": 1.6666666666666667
+      }
+    },
+    "timestamp": "2025-06-09T21:50:06.475535"
+  },
+  "finetuned_model": {
+    "model_name": "Fine-tuned Decompiler",
+    "total_samples": 30,
+    "total_generation_time": 253.14846014976501,
+    "avg_generation_time": 8.438282004992168,
+    "total_tokens_generated": 9235,
+    "avg_tokens_per_sample": 307.8333333333333,
+    "aggregate_metrics": {
+      "length_ratio": {
+        "mean": 0.8698640351515651,
+        "median": 0.14767349731649013,
+        "std": 1.4431360828671576,
+        "min": 0.0,
+        "max": 5.595092024539877
+      },
+      "line_ratio": {
+        "mean": 0.06789672666494002,
+        "median": 0.029910714285714284,
+        "std": 0.13324285257772694,
+        "min": 4.1564487302049126e-05,
+        "max": 0.7058823529411765
+      },
+      "token_overlap": {
+        "mean": 0.01869794585117921,
+        "median": 0.0,
+        "std": 0.04457882664543959,
+        "min": 0.0,
+        "max": 0.21875
+      },
+      "token_precision": {
+        "mean": 0.05507464130336425,
+        "median": 0.0,
+        "std": 0.13681803103928358,
+        "min": 0.0,
+        "max": 0.6028368794326241
+      },
+      "keyword_coverage": {
+        "mean": 0.10555555555555556,
+        "median": 0.0,
+        "std": 0.18944025905197848,
+        "min": 0.0,
+        "max": 0.6666666666666666
+      },
+      "keyword_match_ratio": {
+        "mean": 0.47333333333333333,
+        "median": 0.0,
+        "std": 1.3703891692128136,
+        "min": 0.0,
+        "max": 7.0
+      },
+      "brace_ratio": {
+        "mean": 0.5878553791887126,
+        "median": 0.0,
+        "std": 1.3748795951660246,
+        "min": 0.0,
+        "max": 5.0
+      },
+      "semicolon_ratio": {
+        "mean": 0.121287070209484,
+        "median": 0.0007183908045977011,
+        "std": 0.23541328637766598,
+        "min": 0.0,
+        "max": 0.875
+      }
+    },
+    "timestamp": "2025-06-09T21:54:20.029960"
+  },
+  "improvements": {
+    "token_overlap": {
+      "base_value": 0.018921126110487376,
+      "finetuned_value": 0.01869794585117921,
+      "improvement_percent": -1.179529474117629
+    },
+    "length_ratio": {
+      "base_value": 0.786175823693307,
+      "finetuned_value": 0.8698640351515651,
+      "improvement_percent": 10.644973927728604
+    },
+    "keyword_coverage": {
+      "base_value": 0.08055555555555556,
+      "finetuned_value": 0.10555555555555556,
+      "improvement_percent": 31.03448275862068
+    },
+    "token_precision": {
+      "base_value": 0.042100586632009926,
+      "finetuned_value": 0.05507464130336425,
+      "improvement_percent": 30.81680258937268
+    },
+    "generation_speed": {
+      "base_value": 9.06694077650706,
+      "finetuned_value": 8.438282004992168,
+      "improvement_percent": 6.933526831274578
+    }
+  },
+  "timestamp": "2025-06-09T21:54:20.031925"
+}
