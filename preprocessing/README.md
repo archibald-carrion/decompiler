@@ -1,0 +1,119 @@
+# Dataset generation script (v2)
+
+## About
+
+The `main.py` script contains a CLI tool and an utility function to generate examples to train the 
+decompiler on as files written to disk.
+
+It does so by collecting and then writing to disk examples from two datasets:
+
+### Collecting examples from The Stack
+The script downloads and then compiles source C files into `x86` assemblies whenever possible via `gcc`
+source C files collected from [The Stack](https://huggingface.co/datasets/bigcode/the-stack) dataset,
+and only includes those assemblies which contain at the very least a [local scope symbolic label](https://docs.oracle.com/cd/E19120-01/open.solaris/817-5477/esqaq/index.html)
+
+### Collecting examples from ExeBench
+The script downloads and then filters examples in the `x86` ISA compiled via `gcc`, keeping only the
+relevant data fields, from the [ExeBench](https://huggingface.co/datasets/jordiae/exebench) dataset
+
+## Requirements
+
+| Dependency | Version | Description |
+|------------|---------|-------------|
+|  `python`  | `3.11.2` | Core dependencies, CLI and language support of `Python` |
+|  `venv`  | `3.11.2` | Virtual environment support of `Python` |
+|  `pip`  | `23.0.1` | Package manager for `Python` |
+|  `gcc`  | `12.2.0-14` | GNU Compiler Collection support for compiling `C` code |
+
+For a rundown of required `python` packages, check & install via `requirements.txt`
+
+You may install them via `pip` as follows:
+```bash
+python -m pip install -r requirements.txt
+```
+
+## Usage
+
+Check usage for CLI tool via `python -m preprocessing.main -h`. Refer to the usage hints:
+```bash
+usage: main.py [-h] output_dir exebench_dir stack_token_file max_exebench_size max_stack_size {KB,MB,GB}
+
+Process source C files and x86 assemblies from ExeBench and The Stack
+
+positional arguments:
+  output_dir         Path to output directory of dataset
+  exebench_dir       Path to input directory of compressed (*.zst) dataset files (*.jsonl) with ExeBench splits
+  stack_token_file   Path to file containing an HuggingFace API token (on the first line) with read access to The Stack's dataset
+  max_exebench_size  Maximum size (in units) of processed content for examples in ExeBench
+  max_stack_size     Maximum size (in units) of processed content for examples in The Stack
+  {KB,MB,GB}         Unit of size to use when limiting processing output files total size (bytes)
+
+options:
+  -h, --help         show this help message and exit
+```
+
+You'll need to place ExeBench's splits as `*.jsonl.zst` files placed under the `exebench_dir` directory, 
+as well as an [HuggingFace API token](https://huggingface.co/docs/hub/en/security-tokens) with read 
+access to The Stack's splits on HuggingFace written on the first line of the `stack_token_file` file.
+
+The resulting dataset's files will be placed under the `output_dir` directory as follows:
+- Under the `output_dir/c` directory: C source files in the form `<index>.c`
+- Under the `output_dir/asm` directory: x86 assembly source files in the form `<index>.s`
+- On the `output_dir/mappings.csv` file: A tabular CSV file describing the mappings as follows:
+  - On the `C filename` column: The filename under `output_dir/c` where the corresponding C source code file lies
+  - On the `x86 filename` column: The filename under `output_dir/asm` where the corresponding x86 source code file lies
+  - On the `Optimization level` column: The level of optimization applied for the generation of the corresponding x86 source code. Check the [`gcc` optimization flags](https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html). Supported flags include `O0`, `Os` and `O3`.
+  - On the `Dataset` column: The dataset the example comes from. Listed as either `the-stack` or `exebench`.
+
+## Examples
+
+For generating at most 10 MB of examples from The Stack, and 12 MB from ExeBench as a dataset under `output`,
+assuming the HuggingFace API token for The Stack lies at `token.env` and ExeBench's split lie under `exebench_splits` 
+```bash
+python -m preprocessing.main output exebench_splits token.env 12 10 MB
+```
+
+**Note**: You might want to redirect all logged errors to a file. Following the previous example, 
+one can redirect the standard error stream to the file `err.log` as follows on `bash`-supported terminals
+under Linux:
+```bash
+python -m preprocessing.main output exebench_splits token.env 12 10 MB 2> err.log
+```
+
+If supported by your distribution, you might discard all error logging as follows:
+```bash
+python -m preprocessing.main output exebench_splits token.env 12 10 MB 2> /dev/null
+```
+
+## Notes
+
+Dataset generation can take a long time depending the size of the split files provided from ExeBench,
+your internet speed for streaming the dataset from The Stack, the speed at which `gcc` parses the
+examples from the latter, or the size limit placed on both datasets.
+
+You may also stream examples built directly from memory instead of reading them from disk by calling
+the `load_examples` function provided by the `main` module on this package. They come in the dictionary
+form 
+```python
+{
+    "c": c_code, 
+    "asm": { optimization_level: x86_assembly_code } 
+}
+```
+Where `c_code` and `x86_assembly_code` are `string`s representing the source code content for C and x86
+respectively, and `optimization_level` is a `string` representing the optimization level applied to
+generate `x86_assembly_code` (supported values so far include `O0`, `Os` and `O3`).
+
+For example:
+```python
+from .main import load_examples
+
+for example in load_examples(
+    exebench_dir="./exebench_splits", stack_token=token, 
+    max_exebench_budget: 12*1024, max_stack_budget: 10*1024 # Budgets are specified in bytes
+):
+    c_code = example["c"]
+    for (optimization_level, x86_assembly_code) in example["asm"].items():
+        # Do your own thing
+        llm.train(input=c_code, output=x86_assembly_code, split=x86_assembly_code)
+```
