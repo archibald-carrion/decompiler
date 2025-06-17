@@ -12,6 +12,7 @@ sdist/
 include/
 .installed.cfg
 
+cache/
 # Python virtual environments
 .env
 .venv

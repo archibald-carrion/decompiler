@@ -17,10 +17,10 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the fine-tuning script
-COPY decompilation_finetuning.py .
+COPY finetuning_better.py .
 
 # Create directories for models (will be mounted as volumes)
-RUN mkdir -p /app/models /app/data
+RUN mkdir -p /app/model /app/data
 
 # Set environment variables to avoid TensorFlow warnings
 ENV TF_ENABLE_ONEDNN_OPTS=0
@@ -28,4 +28,4 @@ ENV PYTHONUNBUFFERED=1
 ENV HF_HOME=/app/cache
 
 # Default command - can be overridden
-CMD ["python", "decompilation_finetuning.py", "--help"]
+CMD ["python", "finetuning_better.py", "--help"]

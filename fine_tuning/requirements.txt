@@ -13,6 +13,8 @@ numpy>=1.21.0
 tqdm>=4.64.0
 packaging>=21.0
 
+sentencepiece
+
 # Optional: for better performance
 # torch-audio  # Uncomment if needed
 # sentencepiece  # Uncomment if needed
