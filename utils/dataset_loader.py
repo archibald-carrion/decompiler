@@ -26,6 +26,16 @@ class DecompilationDataset(torch.utils.data.Dataset):
 
         self.root_dir = root_dir
 
+        # Validate sources directory paths
+        self.c_dir = path.join(self.root_dir, "./c")
+        self.asm_dir = path.join(self.root_dir, "./asm")
+
+        if not path.isdir(self.c_dir):
+            raise Exception("Missing c directory for dataset")
+        
+        if not path.isdir(self.asm_dir):
+            raise Exception("Missing x86 directory for dataset")
+
         # Get path to csv mappings
         csv_mappings = path.join(root_dir, csv_mappings)
 
@@ -75,10 +85,10 @@ class DecompilationDataset(torch.utils.data.Dataset):
         # Collect the paths to the source codes, as well as other features,
         # according to the entry
         try:
-            c_path = path.join(self.root_dir, mapping["C filename"])
-            asm_path = path.join(self.root_dir, mapping["x86 filename"])
-            opt_level = path.join(self.root_dir, mapping["Optimization level"])
-            og_dataset = path.join(self.root_dir, mapping["Dataset"])
+            c_path = path.join(self.c_dir, mapping["C filename"])
+            asm_path = path.join(self.asm_dir, mapping["x86 filename"])
+            opt_level = mapping["Optimization level"]
+            og_dataset = mapping["Dataset"]
         except Exception as err:
             print(f"Unable to load fields in dataset mapping entry: {err}", file=stderr)
             raise Exception("Invalid entry for dataset")
@@ -112,7 +122,7 @@ def gen_splits(root_dir: str, csv_mappings: str, random_state: int):
     # If the splits already exist, dont generate them
     if path.exists(train_path) and path.exists(validation_path) and path.exists(test_path):
         print(f"Splits already exist at '{train_path}', '{validation_path}', '{test_path}'"
-        + "Skipping generation...")
+        + " Skipping generation...")
         pass
 
     # Otherwise, load the original mappings and then generate the splits in files
