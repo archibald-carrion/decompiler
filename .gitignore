@@ -24,3 +24,6 @@ Scripts/
 
 # Python cache
 __pycache__/
+
+# VS Code
+.vscode/
