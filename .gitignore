@@ -2,6 +2,7 @@ train_synth_compilable/
 *.pyc
 structured_output/
 models/
+model/
 
 # Python packaging
 .Python
@@ -11,6 +12,7 @@ sdist/
 include/
 .installed.cfg
 
+cache/
 # Python virtual environments
 .env
 .venv
