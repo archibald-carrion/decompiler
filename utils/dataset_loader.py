@@ -140,7 +140,7 @@ def gen_splits(root_dir: str, csv_mappings: str, random_state: int):
     
     # Split [test and validation] set on [test-only] and [validation-only] sets
     X_test, X_val, y_test, y_val = train_test_split(
-        X_testval, y_testval, test_size=0.5, stratify=y_train, random_state=random_state)
+        X_testval, y_testval, test_size=0.5, stratify=y_testval, random_state=random_state)
     
     # Rebuild dataframes
     train = X_train.join(y_train, how="outer")
