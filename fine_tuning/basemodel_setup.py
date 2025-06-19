@@ -18,6 +18,9 @@ def download_model(local_dir: str = "./model/opencoder_base_model", model_name: 
     """
     Download the OpenCoder-1.5B-Instruct model to local folder without cache
     """
+    # Expand path
+    local_dir = os.path.expanduser(local_dir)
+
     # Download model
     print(f"Downloading {model_name} to {local_dir}...")
     
@@ -43,6 +46,10 @@ def test_model(model_path: str):
     """
     Test the downloaded OpenCoder model with a simple code generation task
     """
+    # Expand model directory path
+    model_path = os.path.expanduser(model_path)
+
+    # Validate model directory path
     if not os.path.isdir(model_path):
         raise Exception("Invalid directory for model testing")
 
