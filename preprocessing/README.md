@@ -34,7 +34,7 @@ python -m pip install -r requirements.txt
 
 ## Usage
 
-Check usage for CLI tool via `python -m preprocessing.main -h`. Refer to the usage hints:
+Check usage for CLI tool via `python -m preprocessing -h`. Refer to the usage hints:
 ```bash
 usage: main.py [-h] output_dir exebench_dir stack_token_file max_exebench_size max_stack_size {KB,MB,GB}
 
@@ -70,19 +70,19 @@ The resulting dataset's files will be placed under the `output_dir` directory as
 For generating at most 10 MB of examples from The Stack, and 12 MB from ExeBench as a dataset under `output`,
 assuming the HuggingFace API token for The Stack lies at `token.env` and ExeBench's split lie under `exebench_splits` 
 ```bash
-python -m preprocessing.main output exebench_splits token.env 12 10 MB
+python -m preprocessing output exebench_splits token.env 12 10 MB
 ```
 
 **Note**: You might want to redirect all logged errors to a file. Following the previous example, 
 one can redirect the standard error stream to the file `err.log` as follows on `bash`-supported terminals
 under Linux:
 ```bash
-python -m preprocessing.main output exebench_splits token.env 12 10 MB 2> err.log
+python -m preprocessing output exebench_splits token.env 12 10 MB 2> err.log
 ```
 
 If supported by your distribution, you might discard all error logging as follows:
 ```bash
-python -m preprocessing.main output exebench_splits token.env 12 10 MB 2> /dev/null
+python -m preprocessing output exebench_splits token.env 12 10 MB 2> /dev/null
 ```
 
 ## Notes
