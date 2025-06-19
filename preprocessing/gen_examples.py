@@ -26,8 +26,8 @@ def load_examples(exebench_dir: str, stack_token: str, max_exebench_budget: Numb
             total=max_exebench_budget, unit='B', unit_scale=True, unit_divisor=1024, file=stdout
         ) as pbar:
             for example in pbar:
-                example_size = len(example["c"]) + sum([
-                    len(code) for code in example["asm"].values()])
+                example_size = len(example["c"].encode('utf-8')) + sum([
+                    len(asm.encode('utf-8')) for asm in example["asm"].values()])
                 
                 # Stop yielding examples if the budget is exceeded
                 if example_size > max_exebench_budget:
@@ -51,7 +51,8 @@ def load_examples(exebench_dir: str, stack_token: str, max_exebench_budget: Numb
             total=max_stack_budget, unit='B', unit_scale=True, unit_divisor=1024, file=stdout
         ) as pbar:
             for example in pbar:
-                example_size = len(example["c"]) + sum([len(asm) for asm in example["asm"].values()])
+                example_size = len(example["c"].encode('utf-8')) + sum([
+                    len(asm.encode('utf-8')) for asm in example["asm"].values()])
                 
                 # Stop yielding examples if the budget is exceeded
                 if example_size > max_stack_budget:
