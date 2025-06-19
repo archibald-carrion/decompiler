@@ -1,19 +1,32 @@
+# Path resolution / manipulation
 import os
+
+# Import system
+import sys
+
+# PyTorch support 
 import torch
+
+# LM Models
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from huggingface_hub import snapshot_download
 
-def download_model():
+# Argument parsing
+import argparse
+
+def download_model(local_dir: str = "./model/opencoder_base_model", model_name: str = "infly/OpenCoder-1.5B-Instruct"):
     """
     Download the OpenCoder-1.5B-Instruct model to local folder without cache
     """
-    model_name = "infly/OpenCoder-1.5B-Instruct"
-    local_dir = "./model/opencoder_base_model"
-    
+    # Download model
     print(f"Downloading {model_name} to {local_dir}...")
     
     # Create model directory if it doesn't exist
-    os.makedirs(local_dir, exist_ok=True)
+    try:
+        os.makedirs(local_dir, exist_ok=True)
+    except Exception as err:
+        print(f"Unable to create output directory for model: {err}", file=sys.stderr)
+        raise Exception("Invalid output directory for model")
     
     # Download model files to local directory (no cache)
     snapshot_download(
@@ -26,10 +39,13 @@ def download_model():
     print(f"Model downloaded successfully to {local_dir}")
     return local_dir
 
-def test_model(model_path="./model"):
+def test_model(model_path: str):
     """
     Test the downloaded OpenCoder model with a simple code generation task
     """
+    if not os.path.isdir(model_path):
+        raise Exception("Invalid directory for model testing")
+
     print(f"Loading model from {model_path}...")
     
     # Load tokenizer and model from local directory
@@ -78,9 +94,22 @@ def main():
     """
     Main function to download and test the model
     """
+    # Register arguments
+    parser = argparse.ArgumentParser(description='Download and test pretrained OpenCoder Model')
+    parser.add_argument('model_path', type=str, help='Path to output model weights on')
+    
+    # If no arguments are passed, print the usage
+    if (len(sys.argv) == 0):
+        parser.parse_args(["-h"])
+        sys.exit(0)
+
+    # Otherwise, parse the commands and run accordingly
+    args = parser.parse_args()
+
+    # Download and test model
     try:
         # Download model
-        model_path = download_model()
+        model_path = download_model(args.model_path)
 
         # Test model
         test_model(model_path)
