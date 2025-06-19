@@ -81,9 +81,14 @@ def process(output_dir: str, exebench_dir: str, stack_token_file: str, max_exebe
     unit_conversion = {"KB": 2**10, "MB": 2**20, "GB": 2**30}
 
     # Check valid parameters
+    # Paths
     assert isinstance(output_dir, str), "Dataset output directory path should be a string"
+    output_dir = os.path.expanduser(output_dir)
     assert isinstance(exebench_dir, str) and os.path.isdir(exebench_dir), "ExeBench's splits data directory path should be valid and a string"
+    exebench_dir = os.path.expanduser(exebench_dir)
     assert isinstance(stack_token_file, str) and os.path.isfile(stack_token_file), "The Stack's access token file path should be valid and a string"
+    stack_token_file = os.path.expanduser(stack_token_file)
+    # Sizes
     assert isinstance(max_exebench_size, Number) and max_exebench_size >= 0, "Maximum size for ExeBench should be a non-negative number"
     assert isinstance(max_stack_size, Number) and max_stack_size >= 0, "Maximum size for The Stack should be a non-negative number"
     assert max_stack_size > 0 or max_exebench_size > 0, "Net size for dataset output should be a greater than zero"
