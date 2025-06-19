@@ -219,3 +219,6 @@ share/
 
 # Enviroment secrets
 *.env
+
+# Misc. locks
+**/.lock
