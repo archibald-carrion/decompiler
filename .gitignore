@@ -216,3 +216,6 @@ pyvenv.cfg
 
 # Shared files
 share/
+
+# Enviroment secrets
+*.env
