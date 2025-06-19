@@ -12,6 +12,7 @@ fsspec==2025.3.0
 hf-xet==1.1.0
 huggingface-hub==0.31.1
 idna==3.10
+joblib==1.5.1
 multidict==6.4.3
 multiprocess==0.70.16
 numpy==2.2.5
@@ -21,11 +22,14 @@ propcache==0.3.1
 pyarrow==20.0.0
 python-dateutil==2.9.0.post0
 pytz==2025.2
-PyYAML==6.0.2
+pyyaml==6.0.2
 requests==2.32.3
+scikit-learn==1.7.0
+scipy==1.15.3
 six==1.17.0
+threadpoolctl==3.6.0
 tqdm==4.67.1
-typing_extensions==4.13.2
+typing-extensions==4.13.2
 tzdata==2025.2
 urllib3==2.4.0
 xxhash==3.5.0
