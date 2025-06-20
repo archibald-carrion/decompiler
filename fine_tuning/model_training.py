@@ -11,7 +11,7 @@ from transformers import Trainer
 
 # Memory usage reports
 from psutil import virtual_memory # Virtual memory
-from torch.cuda import is_available as is_cuda_available, memory_allocated as cuda_memory_allocated # CUDA memory
+from torch.cuda import is_available as is_cuda_available, memory_allocated as cuda_memory_allocated, memory_reserved as cuda_memory_reserved # CUDA memory
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -41,7 +41,7 @@ def train_model(trainer: Trainer, output_dir: str):
         if is_cuda_available():
             logger.info(
                 f"[CUDA] Allocated: {cuda_memory_allocated() / 1024 ** 2:.2f} MB, "
-                + f"Reserved: {cuda_memory_allocated() / 1024 ** 2:.2f} MB"
+                + f"Reserved: {cuda_memory_reserved() / 1024 ** 2:.2f} MB"
             )
 
         # Start training
