@@ -50,7 +50,7 @@ def gen_splits(root_dir: str, csv_mappings: str, seed: Number, p_train: Number, 
     
     # Split [test and validation] set on [test-only] and [validation-only] sets
     X_test, X_val, y_test, y_val = train_test_split(
-        X_testval, y_testval, test_size=p_val, stratify=y_testval, random_state=seed)
+        X_testval, y_testval, test_size=p_val/(p_test+p_val), stratify=y_testval, random_state=seed)
     
     # Rebuild dataframes
     train = X_train.join(y_train, how="outer")
