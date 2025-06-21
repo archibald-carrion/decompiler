@@ -61,7 +61,10 @@ def load_model(model_path: str):
         # Load model
         model = AutoModelForCausalLM.from_pretrained(
             model_path,
-            torch_dtype=float16 if is_cuda_available() else float32,
+            # TODO: The alternative line below won't work. Can't finetune models loaded with FP16?
+            # See: https://github.com/huggingface/transformers/issues/23165#issuecomment-1536439098
+            # torch_dtype=float16 if is_cuda_available() else float32,
+            torch_dtype=float32, # Always loading model with FP32 for now
             device_map="auto" if is_cuda_available() else None,
             trust_remote_code=True
         )
