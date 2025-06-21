@@ -4,7 +4,7 @@ Fine-tuning script for OpenCoder-1.5B-Instruct model
 Trains on assembly code -> C function pairs
 """
 
-from os import path # Path manipulation
+from os import path, makedirs # Path manipulation
 import logging # Formatted logging
 
 from transformers import Trainer
@@ -28,7 +28,7 @@ def train_model(trainer: Trainer, output_dir: str):
 
     # Validate and expand output directory path
     assert isinstance(output_dir, str), "Output directory path for model should be a string"
-    assert path.isdir(output_dir), "Invalid output directory for model"
+    output_dir = path.expanduser(output_dir)
     
     # Begin training
     logger.info("====  Fine-tuning Start ====")
@@ -68,6 +68,7 @@ def train_model(trainer: Trainer, output_dir: str):
     logger.info(f"Saving model to {output_dir}...")
 
     try:
+        makedirs(output_dir, exist_ok=True)
         trainer.save_model(output_dir)
     except Exception as err:
         logger.error("Unable to save model due to error:")
