@@ -57,7 +57,7 @@ class DecompilationDataset(torch.utils.data.Dataset):
         """
         Returns the amount of elements in the dataset
         """
-        return len(self.mappings.shape[0])
+        return self.mappings.shape[0]
 
     def __getitem__(self, idx: int):
         """
@@ -116,7 +116,7 @@ class DecompilationDataset(torch.utils.data.Dataset):
                 {"role": "assistant", "content": f"<|tool_start|>{c_code}<|tool_end>"}
             ], 
             tokenize=True, truncation=True, max_length=self.tokenizer.model_max_length,
-            padding='max_length', return_tensors='pt'
+            padding='max_length', return_dict=True, return_tensors='pt'
         )
 
         # Construct and return an ordered output
