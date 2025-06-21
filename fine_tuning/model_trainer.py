@@ -51,6 +51,7 @@ def create_training_args(
             learning_rate=5e-5, # Small initial learning rate
             weight_decay=0.01, # Small initial weight decay
             eval_strategy="epoch", # Check up with the evaluation dataset every epoch
+            save_strategy="epoch", # Save the checkpoints every epoch
             # Warmup, logging and saving steps
             warmup_steps=100,
             logging_steps=10,
