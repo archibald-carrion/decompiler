@@ -149,7 +149,7 @@ from transformers import TrainingArguments
 from .model_trainer import create_trainer
 
 # Train model
-from .model_training import train_model
+from .model_training import train_model as train_model_r
 
 # Collect training metrics
 from .model_evaluation import collect_training_metrics
@@ -215,7 +215,7 @@ def train_model(
     print(f"Booting up training...")
 
     try:
-        train_model(trainer, output_dir)
+        train_model_r(trainer, output_dir)
     except Exception as err:
         print(f"An unhandled error ocurred while training the model: {err}", file=stderr)
         raise Exception("Invalid training")

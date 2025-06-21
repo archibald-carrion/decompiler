@@ -4,8 +4,9 @@ from os import path, makedirs
 # Import system
 from sys import stderr
 
-# PyTorch support 
-import torch
+# PyTorch support
+from torch import float16, float32
+from torch.cuda import is_available as is_cuda_available 
 
 # LM Models
 from transformers import AutoTokenizer, AutoModelForCausalLM
@@ -60,8 +61,8 @@ def load_model(model_path: str):
         # Load model
         model = AutoModelForCausalLM.from_pretrained(
             model_path,
-            torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
-            device_map="auto" if torch.cuda.is_available() else None,
+            torch_dtype=float16 if is_cuda_available() else float32,
+            device_map="auto" if is_cuda_available() else None,
             trust_remote_code=True
         )
     except Exception as err:
