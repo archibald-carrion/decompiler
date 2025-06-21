@@ -52,6 +52,7 @@ def create_training_args(
             weight_decay=0.01, # Small initial weight decay
             eval_strategy="epoch", # Check up with the evaluation dataset every epoch
             save_strategy="epoch", # Save the checkpoints every epoch
+            save_total_limit=1, # Save at most 1 model candidate every checkpoint
             # Warmup, logging and saving steps
             warmup_steps=100,
             logging_steps=10,
