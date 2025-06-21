@@ -72,7 +72,7 @@ def train_model(trainer: Trainer, output_dir: str):
         trainer.save_model(output_dir)
     except Exception as err:
         logger.error("Unable to save model due to error:")
-        logger.error(str(re), exc_info=True)
+        logger.error(str(err), exc_info=True)
         return
     
     logger.info(f"Model saved succesfully under {output_dir}")
