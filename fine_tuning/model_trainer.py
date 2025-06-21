@@ -107,7 +107,7 @@ def load_training_args(arguments_path: str) -> TrainingArguments:
     
     # De-serialize contents
     try:
-        training_args = HfArgumentParser(TrainingArguments).parse_json_file(arguments_path)
+        training_args, = HfArgumentParser(TrainingArguments).parse_json_file(arguments_path)
     except Exception as err:
         print(f"Unable to load TrainingArguments from file {arguments_path}: {err}", file=stderr)
         raise Exception("Invalid TrainingArguments file")
