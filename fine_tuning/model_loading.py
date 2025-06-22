@@ -20,7 +20,7 @@ def load_model(model_path: str):
     ### Returns:
         (model, tokenizer)
     """
-    MODEL_REPO = "distilbert/distilgpt2"
+    MODEL_REPO = "infly/OpenCoder-1.5B-Instruct"
     
     # Validate local directory path
     assert isinstance(model_path, str), "Local model directory path should be a string"
