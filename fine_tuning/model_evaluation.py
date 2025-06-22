@@ -64,10 +64,12 @@ def collect_training_metrics(trainer: Trainer, output_dir: str):
         fig, ax = plt.subplots(nrows=1, ncols=1)
 
         # ... With a time series per-step for training and validation losses
-        ax.plot("Step", "Training Loss", markersize=12, data=lines)
-        ax.plot("Step", "Validation Loss", markersize=12, data=lines)
+        ax.plot("Step", "Training Loss", label='Training', markersize=12, data=lines)
+        ax.plot("Step", "Validation Loss", label='Validation', markersize=12, data=lines)
         ax.set_title('Model loss over training')
         ax.set_ylabel("Loss")
+        ax.legend()
+
         # TODO: Check for loss axis' boundaries
         # Loss may possibly be unbound (the default CausalLM loss is cross-entropy, for example)
         # Lets keep the loss axis unbounded for now
@@ -79,6 +81,9 @@ def collect_training_metrics(trainer: Trainer, output_dir: str):
         # ... And an additional epoch horizontal axis
         ax2 = ax.secondary_xaxis("top", functions=(to_epoch, to_step))
         ax2.set_xlabel("Epoch")
+
+        # Resize layout so it fits into plot
+        fig.tight_layout()
 
         # Save plot to the appropiate path
         try:
