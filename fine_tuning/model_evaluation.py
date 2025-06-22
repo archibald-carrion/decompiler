@@ -26,7 +26,7 @@ def collect_training_metrics(trainer: Trainer, output_dir: str):
     assert isinstance(output_dir, str), "Output directory should be a string"
     output_dir = path.expanduser(output_dir)
 
-    # Create output directory for plots 
+    # Create output directory for plots
     try:
         makedirs(output_dir, exist_ok=True)
     except Exception as err:
@@ -38,29 +38,40 @@ def collect_training_metrics(trainer: Trainer, output_dir: str):
 
     # Assert that log lines exist
     assert isinstance(lines, list) and len(lines) > 0, "Missing metric lines from logged history"
-    
+
     # Turn them into a time series
     indicators = list(lines[0].keys())
-    lines = {indicator: [metric for metric in lines[indicator]] for indicator in indicators}
+    lines = {indicator: [line[indicator] for line in lines] for indicator in indicators}
+    print(lines)
 
     # Generate loss-per-step plot
     fig_path = path.join(output_dir, "loss_per_step.png")
     print(f"Creating step-loss plot into {fig_path}")
     try:
         # ... With a correspondence between the epochs and steps unit
-        epoch_for_step = dict(zip(lines["Step"], lines["Epoch"]))
-        earliest_step_for_epoch = dict(zip(reversed(lines["Epoch"]), reversed(lines["Step"])))
+        batch_size = (
+            # Batch size per pass, from all devices
+            max(trainer.args.per_device_train_batch_size, 1) * max(trainer.args.n_gpu, 1)
+            # Passes until gradient accumulation
+            * max(trainer.args.gradient_accumulation_steps, 1)
+        )
 
-        to_epoch = lambda step: epoch_for_step[step]
-        to_step = lambda epoch: earliest_step_for_epoch[epoch]
+        steps_per_epoch = len(trainer.train_dataset) / batch_size
+        to_epoch = lambda steps: steps / steps_per_epoch
+        to_step = lambda epochs: epochs * steps_per_epoch
 
         # ... Make it a single-celled plot
         fig, ax = plt.subplots(nrows=1, ncols=1)
 
         # ... With a time series per-step for training and validation losses
-        ax.plot("Step", "Training Loss", xlabel="Step", ylabel="Training Loss", data=lines)
-        ax.plot("Step", "Validation Loss", xlabel="Step", ylabel="Training Loss", data=lines)
+        ax.plot("Step", "Training Loss", markersize=12, data=lines)
+        ax.plot("Step", "Validation Loss", markersize=12, data=lines)
         ax.set_title('Model loss over training')
+        ax.set_ylabel("Loss")
+        # TODO: Check for loss axis' boundaries
+        # Loss may possibly be unbound (the default CausalLM loss is cross-entropy, for example)
+        # Lets keep the loss axis unbounded for now
+        #ax.set_ylim(0,1)
 
         # ... With a step horizontal axis
         ax.set_xlabel("Step")
@@ -68,7 +79,7 @@ def collect_training_metrics(trainer: Trainer, output_dir: str):
         # ... And an additional epoch horizontal axis
         ax2 = ax.secondary_xaxis("top", functions=(to_epoch, to_step))
         ax2.set_xlabel("Epoch")
-        
+
         # Save plot to the appropiate path
         try:
             fig.savefig(fig_path)

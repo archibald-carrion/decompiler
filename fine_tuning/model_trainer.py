@@ -64,7 +64,7 @@ def create_training_args(
             # Misc. settings
             dataloader_pin_memory=False, # Do not pin memory
             remove_unused_columns=False, # Do not remove unused columns
-            report_to=None, # Disable wandb/tensorboard/etc reporting integrations
+            report_to="none", # Disable wandb/tensorboard/etc reporting integrations
             seed=seed
         )
     except Exception as err:

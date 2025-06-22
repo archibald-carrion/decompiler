@@ -4,7 +4,7 @@ Fine-tuning script for OpenCoder-1.5B-Instruct model
 Trains on assembly code -> C function pairs
 """
 
-from os import path, makedirs # Path manipulation
+from os import path, makedirs, listdir # Path manipulation
 import logging # Formatted logging
 
 from transformers import Trainer
@@ -29,7 +29,7 @@ def train_model(trainer: Trainer, output_dir: str):
     # Validate and expand output directory path
     assert isinstance(output_dir, str), "Output directory path for model should be a string"
     output_dir = path.expanduser(output_dir)
-    
+
     # Begin training
     logger.info("====  Fine-tuning Start ====")
     try:
@@ -46,9 +46,16 @@ def train_model(trainer: Trainer, output_dir: str):
 
         # Start training
         logger.info("Starting training...")
-
         try:
-            train_output = trainer.train()
+            # Check for possible checkpoints
+            checkpoints_assumed = len(listdir(trainer.args.output_dir)) > 0
+            logger.info(
+                f"Checkpoints directory is {"non-empty" if checkpoints_assumed else "empty"}. "
+                + ("Attempting to resume from checkpoints" if checkpoints_assumed else "Writing new checkpoints")
+            )
+
+            # Begin training after looking for checkpoints
+            train_output = trainer.train(resume_from_checkpoint=checkpoints_assumed)
             logger.info(f"Training output: {train_output}")
         except RuntimeError as re:
             logger.error("RuntimeError during training (possible OOM):")
