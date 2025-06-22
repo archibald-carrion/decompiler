@@ -2,8 +2,8 @@ from os import path, makedirs # Path manipulation
 from sys import stderr # Error stream messages
 
 from transformers import (
-    PreTrainedTokenizer, # Tokenization
-    AutoModelForCausalLM, # Model
+    PreTrainedTokenizerBase, # Tokenization
+    PreTrainedModel, # Model
     Trainer, # Model training management
     TrainingArguments, # Replicate training hyperparameters
     DataCollatorForLanguageModeling # Data collation
@@ -110,13 +110,13 @@ def collect_training_metrics(trainer: Trainer, output_dir: str):
     print("Finished collecting stats")    
 
 def collect_test_metrics(
-    model: AutoModelForCausalLM, tokenizer: PreTrainedTokenizer,
+    model: PreTrainedModel, tokenizer: PreTrainedTokenizerBase,
     training_args: TrainingArguments, test_dataset: DecompilationDataset,
     output_dir: str
 ):
     # Validate model and tokenizer
-    assert isinstance(model, AutoModelForCausalLM), "Model should be AutoModelForCausalLM"
-    assert isinstance(tokenizer, PreTrainedTokenizer), "Tokenizer should be PreTrainedTokenizer"
+    assert isinstance(model, PreTrainedModel), "Model should be PreTrainedModel"
+    assert isinstance(tokenizer, PreTrainedTokenizerBase), "Tokenizer should be PreTrainedTokenizerBase"
 
     # Validate training arguments
     assert isinstance(training_args, TrainingArguments)

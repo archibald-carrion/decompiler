@@ -70,6 +70,8 @@ def download_test_model(model_path: str, test: bool):
         generated_text = tokenizer.decode(outputs[0], skip_special_tokens=False)
         response = generated_text[len(test_prompt):].split("<|im_end|>")[0].strip()
         
+        print(f"\nModel Prompt: \n{test_prompt}\n")
+        print(f"\nModel Text: \n{generated_text}\n")
         print(f"\nModel Response: \n{response}\n")
         print("\nTest completed successfully!")
     except Exception as err:

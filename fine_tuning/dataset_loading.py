@@ -4,7 +4,7 @@ import pandas as pd # Dataframes
 from os import path # Path resolution
 from sys import stderr # Standard error file
 import torch # PyTorch dataset interface
-from transformers import PreTrainedTokenizer # Tokenization
+from transformers import PreTrainedTokenizerBase # Tokenization
 
 class DecompilationDataset(torch.utils.data.Dataset):
     """
@@ -13,7 +13,7 @@ class DecompilationDataset(torch.utils.data.Dataset):
     {"text": prompt}
     """
 
-    def __init__(self, csv_mappings: str, root_dir: str, tokenizer: PreTrainedTokenizer):
+    def __init__(self, csv_mappings: str, root_dir: str, tokenizer: PreTrainedTokenizerBase):
         """
         Arguments:
             csv_mappings (string): Path to the csv file with mappings between source codes.
@@ -40,7 +40,7 @@ class DecompilationDataset(torch.utils.data.Dataset):
         assert path.isfile(csv_mappings), "Invalid mappings CSV table subpath for dataset"
 
         # Validate tokenizer
-        assert isinstance(tokenizer, PreTrainedTokenizer), "Tokenizer should be a PreTrainedTokenizer"
+        assert isinstance(tokenizer, PreTrainedTokenizerBase), "Tokenizer should be a PreTrainedTokenizerBase"
         self.tokenizer = tokenizer
 
         # Load mapping into memory

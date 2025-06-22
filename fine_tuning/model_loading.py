@@ -8,7 +8,7 @@ from sys import stderr
 from torch import float16, float32
 from torch.cuda import is_available as is_cuda_available 
 
-# LM Models
+# (Down)loadLM Models
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from huggingface_hub import snapshot_download
 
@@ -53,11 +53,6 @@ def load_model(model_path: str):
     # Load the model and its tokenizer to memory 
     print(f"Loading model and tokenizer from {model_path}")
     try:
-        # Load tokenizer, adjust padding
-        tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
-        if tokenizer.pad_token is None:
-            tokenizer.pad_token = tokenizer.eos_token
-        
         # Load model
         model = AutoModelForCausalLM.from_pretrained(
             model_path,
@@ -68,6 +63,31 @@ def load_model(model_path: str):
             device_map="auto" if is_cuda_available() else None,
             trust_remote_code=True
         )
+
+        # Load tokenizer
+        tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
+        
+        # Add BOS, EOS and padding tokens if none are provided
+        if None in [tokenizer.bos_token, tokenizer.eos_token, tokenizer.pad_token]: 
+            tokenizer.add_special_tokens(
+                # Provided from OpenCoder
+                # See https://huggingface.co/infly/OpenCoder-1.5B-Instruct/blob/d1d1fec467bb8cb9cb1b9bd8b5267fabac284df9/tokenizer_config.json
+                special_tokens_dict={
+                    'eos_token': "<|im_start|>", 'bos_token': "<|im_end|>", "pad_token": "<pad>"},
+                replace_additional_special_tokens=False
+            )
+
+            # Resize embeddings appropiately
+            model.resize_token_embeddings(len(tokenizer))
+
+        # Add a chat template if none are provided
+        tokenizer.chat_template = (
+            tokenizer.chat_template if tokenizer.chat_template is not None 
+            # Provided from OpenCoder
+            # See https://huggingface.co/infly/OpenCoder-1.5B-Instruct/blob/d1d1fec467bb8cb9cb1b9bd8b5267fabac284df9/tokenizer_config.json
+            else "{% for message in messages %}{% if loop.first and messages[0]['role'] != 'system' %}{{ '<|im_start|>system\nYou are OpenCoder, created by OpenCoder Team.<|im_end|>\n' }}{% endif %}{{'<|im_start|>' + message['role'] + '\n' + message['content'] + '<|im_end|>' + '\n'}}{% endfor %}{% if add_generation_prompt %}{{ '<|im_start|>assistant\n' }}{% endif %}"
+        )
+
     except Exception as err:
         print(f"Unable to load model and tokenizer into memory from {model_path}: {err}")
         raise Exception("Model load failure")

@@ -2,8 +2,8 @@ from os import path # Path manipulation
 from sys import stderr # Error stream messages
 
 from transformers import (
-    PreTrainedTokenizer, # Tokenization
-    AutoModelForCausalLM, # Model
+    PreTrainedTokenizerBase, # Tokenization
+    PreTrainedModel, # Model
     DataCollatorForLanguageModeling, # Data collation
     Trainer, # Model training management
     TrainingArguments, # Model training hyperparameters
@@ -116,14 +116,14 @@ def load_training_args(arguments_path: str) -> TrainingArguments:
     return training_args
 
 def create_trainer(
-    model: AutoModelForCausalLM, tokenizer: PreTrainedTokenizer, 
-    train_dataset: DecompilationDataset , eval_dataset: DecompilationDataset, 
+    model: PreTrainedModel, tokenizer: PreTrainedTokenizerBase, 
+    train_dataset: DecompilationDataset, eval_dataset: DecompilationDataset, 
     training_args: TrainingArguments
 ) -> Trainer:
     """ Setup and return trainer with given training hyperparemeters
     ### Arguments:
-        model (AutoModelForCausalLM): Model to train / finetuning
-        tokenizer (PreTrainedTokenizer): Tokenizer to use in training / finetuning
+        model (PreTrainedModel): Model to train / finetuning
+        tokenizer (PreTrainedTokenizerBase): Tokenizer to use in training / finetuning
         train_dataset (DecompilationDataset): Training split dataset
         eval_dataset (DecompilationDataset): Evaluation split dataset
         training_args (TrainingArguments): Hyperparameter configuration for training
