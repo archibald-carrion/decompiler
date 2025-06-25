@@ -6,7 +6,7 @@ from torch import no_grad
 from torch.cuda import is_available as is_cuda_available
 
 # Loading the model
-from .model_loading import load_model
+from ..utils.model_loading import load_model
 
 # Downloading and/or testing the pre-trained model with a prompt
 def download_test_model(model_path: str, test: bool):
