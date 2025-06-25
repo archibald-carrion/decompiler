@@ -10,7 +10,7 @@ from transformers import (
     DataCollatorForLanguageModeling # Data collation
 )
 
-from sklearn.metrics import accuracy_score, precision_score, log_loss # Hand-crafted metrics
+from sklearn.metrics import accuracy_score, precision_recall_fscore_support, log_loss # Hand-crafted metrics
 from math import exp # ...
 import numpy as np # ...
 
@@ -27,14 +27,35 @@ def compute_eval_metrics(eval_preds: EvalPrediction):
     logits, labels = eval_preds
 
     # We'll asume one-hot encoding
-    predicted_labels = np.argmax(logits, axis=-1)
+    predicted_labels : np.ndarray = np.argmax(logits, axis=-1)
 
-    # Compute accuracy, precision and perplexity scores
+    # Flatten in case we got batches
+    labels = labels.flatten()
+    predicted_labels = predicted_labels.flatten()
+    logits = logits.reshape((-1, logits.shape[-1]))
+
+    # Compute precision, recall and a (semi) balanced fbeta (if balance holds, f1) scores
+    precision, recall, f1, _ = precision_recall_fscore_support(
+        labels, predicted_labels, 
+        # We'll try to balance the classes at the expense of the fbeta score straying away from f1
+        average="weighted", zero_division=np.nan
+    )
+
+    # Compute accuracy
+    accuracy = accuracy_score(labels, predicted_labels)
+
+    # Compute cross-entropy loss and perplexity
+    cross_entropy_loss = log_loss(labels, logits)
+    perplexity = exp(cross_entropy_loss)
+
+    # Report scores
     return {
-        "accuracy": accuracy_score(labels, predicted_labels),
-        "precision": precision_score(labels, predicted_labels),
-        "cross_entroy_loss": log_loss(labels, logits),
-        "perplexity": exp(log_loss(labels, logits)),
+        "accuracy": accuracy,
+        "precision": precision,
+        "recall": recall,
+        "f1": f1,
+        "cross_entroy_loss": cross_entropy_loss,
+        "perplexity": perplexity,
     }
     
 def collect_training_metrics(trainer: Trainer, output_dir: str):
