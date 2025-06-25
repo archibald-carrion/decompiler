@@ -1,0 +1,145 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Assembly to C Decompiler</title>
+    <link rel="stylesheet" href="{% static 'assembly/style.css' %}">
+    <style>
+        html, body {
+            height: 100%;
+        }
+        body {
+            min-height: 100vh;
+            min-width: 100vw;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: var(--bg, #b3b3b3);
+            color: var(--fg, #22223b);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--container-bg, #b3b3b3);
+            border: 0px solid var(--border, #000000);
+            box-sizing: border-box;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            border-radius: 24px;
+            padding: 32px 16px 24px 16px;
+            max-width: 100vw;
+            max-height: 100vh;
+        }
+        .spacer {
+            width: 32px;
+            min-width: 16px;
+            max-width: 48px;
+            display: block;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 32px;
+            color: var(--fg, #000000);
+        }
+        .fields {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            width: 100%;
+            max-width: 900px;
+        }
+        .field {
+            flex: 1 1 300px;
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--label, #000000);
+        }
+        textarea {
+            border: 1.5px solid #c9c9c9;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 1rem;
+            resize: vertical;
+            background: var(--textarea-bg, #f4f4f4);
+            min-height: 180px;
+            margin-bottom: 0;
+            transition: border 0.2s, background 0.2s, color 0.2s;
+            color: var(--fg, #22223b);
+        }
+        textarea:focus {
+            border: 1.5px solid var(--border, #4a4e69);
+            outline: none;
+            background: var(--textarea-focus-bg, #fff);
+            color: var(--fg, #22223b);
+        }
+        body.dark textarea:focus {
+            background: #23243a;
+            color: #f8fafc;
+        }
+        textarea[readonly] {
+            background: var(--readonly-bg, #e9ecef);
+            color: var(--readonly-fg, #495057);
+        }
+        .actions {
+            text-align: center;
+            margin: 32px 0 0 0;
+        }
+        button[type="submit"] {
+            background: linear-gradient(90deg, #4a4e69 0%, #9a8c98 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 32px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            transition: background 0.2s;
+        }
+        button[type="submit"]:hover {
+            background: linear-gradient(90deg, #22223b 0%, #4a4e69 100%);
+        }
+        @media (max-width: 900px) {
+            .fields { flex-direction: column; gap: 16px; }
+        }
+        @media (max-width: 700px) {
+            .container { padding: 8px; }
+        }
+        /* No dark mode */
+    </style>
+    <!-- No dark mode JS -->
+</head>
+<body>
+    <div class="container">
+        <h2>Assembly to C Decompiler</h2>
+        <form method="post" autocomplete="off" style="width:100%;max-width:900px;">
+            {% csrf_token %}
+            <div class="fields">
+                <div class="field">
+                    <label for="assembly_code">Assembly Code</label>
+                    <textarea id="assembly_code" name="assembly_code" placeholder="Enter assembly code here...">{{ assembly_code|default:'' }}</textarea>
+                </div>
+                <span class="spacer"></span>
+                <div class="field">
+                    <label for="c_output">C Output</label>
+                    <textarea id="c_output" name="c_output" readonly>{{ c_output|default:'' }}</textarea>
+                </div>
+            </div>
+            <div class="actions">
+                <button type="submit">Decompile</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
