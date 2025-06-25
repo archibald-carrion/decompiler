@@ -1,11 +1,15 @@
 
-# <img src="doc/sauron_logo.svg" alt="Sauron Decompiler Logo" width="60"/> Sauron Decompiler
+# Sauron Decompiler
 
 <p align="center">
     <img src="https://img.shields.io/badge/python-3.10%2B-blue.svg" alt="Python Version"/>
     <img src="https://img.shields.io/badge/build-passing-brightgreen.svg" alt="Build Status"/>
-    <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License"/>
     <a href="https://django.readthedocs.io/en/stable/" target="_blank"><img src="https://img.shields.io/badge/Django-5.2.3-green.svg" alt="Django"/></a>
+    <a href="https://huggingface.co/" target="_blank"><img src="https://img.shields.io/badge/HuggingFace-transformers-yellow.svg?logo=huggingface" alt="Hugging Face"/></a>
+</p>
+
+<p align="center">
+    <img src="doc/sauron_logo.svg" alt="Sauron Decompiler Logo" width="200"/>
 </p>
 
 ---
