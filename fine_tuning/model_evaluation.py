@@ -70,7 +70,7 @@ def compute_eval_metrics(eval_preds: EvalPrediction):
         "precision": precision,
         "recall": recall,
         "f1": f1,
-        "cross_entroy_loss": cross_entropy_loss,
+        "cross_entropy_loss": cross_entropy_loss,
         "perplexity": perplexity,
     }
     
