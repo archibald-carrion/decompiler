@@ -49,7 +49,8 @@ def create_training_args(
             # Training epochs, batches and rate/weight decays for scheduler
             num_train_epochs=training_epochs,
             auto_find_batch_size=True, # Find batch sizes that fit into memory. Requires 'accelerate' package
-            gradient_accumulation_steps=gradient_accum_steps,
+            gradient_accumulation_steps=gradient_accum_steps, # So we don't run out of CUDA memory when doing gradient descent
+            eval_accumulation_steps=gradient_accum_steps, # (...) when running evaluations
             learning_rate=5e-5, # Small initial learning rate
             weight_decay=0.01, # Small initial weight decay
             eval_strategy="epoch", # Check up with the evaluation dataset every epoch
@@ -59,7 +60,6 @@ def create_training_args(
             # Warmup, logging and saving steps
             warmup_steps=100,
             logging_steps=10,
-            save_steps=500,
             # Use mixed-precision training whenever CUDA is available
             fp16=is_cuda_available(),
             # Misc. settings
