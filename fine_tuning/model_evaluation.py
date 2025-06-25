@@ -12,6 +12,7 @@ from transformers import (
 
 from sklearn.metrics import accuracy_score, precision_score, log_loss # Hand-crafted metrics
 from math import exp # ...
+import numpy as np # ...
 
 from torch.cuda import is_available as is_cuda_available # CUDA detection
 
@@ -26,7 +27,7 @@ def compute_eval_metrics(eval_preds: EvalPrediction):
     logits, labels = eval_preds
 
     # We'll asume one-hot encoding
-    predicted_labels = logits.argmax(logits, axis=-1)
+    predicted_labels = np.argmax(logits, axis=-1)
 
     # Compute accuracy, precision and perplexity scores
     return {
