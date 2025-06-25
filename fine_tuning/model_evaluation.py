@@ -99,7 +99,6 @@ def collect_training_metrics(trainer: Trainer, output_dir: str):
     # Turn them into a time series
     indicators = list(lines[0].keys())
     lines = {indicator: [line[indicator] for line in lines] for indicator in indicators}
-    print(lines)
 
     # ... With a correspondence between the epochs and steps unit
     batch_size = (
@@ -112,6 +111,16 @@ def collect_training_metrics(trainer: Trainer, output_dir: str):
     steps_per_epoch = len(trainer.train_dataset) / batch_size
     to_epoch = lambda steps: steps / steps_per_epoch
     to_step = lambda epochs: epochs * steps_per_epoch
+
+    # Save logged metric lines for later
+    lines_path = path.join(output_dir, "log_stats.json")
+    print(f"Saving training stats to {lines_path}")
+    try:
+        with open(lines_path, 'w') as lines_file:
+            json_dump(lines, lines_file)
+    except Exception as err:
+        print(f"Unable to save overall stats log into {lines_path}: {err}", file=stderr)
+        print("Skipping saving...", file=stderr)
 
     # Generate loss-per-step plot
     fig_path = path.join(output_dir, "loss_per_step.png")
