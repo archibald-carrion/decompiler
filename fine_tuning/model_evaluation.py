@@ -2,6 +2,7 @@ from os import path, makedirs # Path manipulation
 from sys import stderr # Error stream messages
 
 from transformers import (
+    EvalPrediction, # Collected predictions
     PreTrainedTokenizerBase, # Tokenization
     PreTrainedModel, # Model
     Trainer, # Model training management
@@ -9,14 +10,32 @@ from transformers import (
     DataCollatorForLanguageModeling # Data collation
 )
 
-from torch.cuda import is_available as is_cuda_available # CUDA acceleration
+from sklearn.metrics import accuracy_score, precision_score, log_loss # Hand-crafted metrics
+from math import exp # ...
+
+from torch.cuda import is_available as is_cuda_available # CUDA detection
 
 from transformers.modelcard import parse_log_history # Human-readable metric parsing
-from .dataset_loading import DecompilationDataset
+from .dataset_loading import DecompilationDataset # Datasets
 
 import matplotlib.pyplot as plt # Plotting losses
 from json import dump as json_dump # Serializing metrics
 
+def compute_eval_metrics(eval_preds: EvalPrediction):
+    # Collect the logits and labels
+    logits, labels = eval_preds
+
+    # We'll asume one-hot encoding
+    predicted_labels = logits.argmax(logits, axis=-1)
+
+    # Compute accuracy, precision and perplexity scores
+    return {
+        "accuracy": accuracy_score(labels, predicted_labels),
+        "precision": precision_score(labels, predicted_labels),
+        "cross_entroy_loss": log_loss(labels, logits),
+        "perplexity": exp(log_loss(labels, logits)),
+    }
+    
 def collect_training_metrics(trainer: Trainer, output_dir: str):
     # Validate trainer
     assert isinstance(trainer, Trainer), "Trainer parameter should be a HF Trainer"

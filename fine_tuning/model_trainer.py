@@ -2,6 +2,7 @@ from os import path # Path manipulation
 from sys import stderr # Error stream messages
 
 from transformers import (
+    EvalPrediction, # Predictions to score
     PreTrainedTokenizerBase, # Tokenization
     PreTrainedModel, # Model
     DataCollatorForLanguageModeling, # Data collation
@@ -10,8 +11,9 @@ from transformers import (
     HfArgumentParser # Training arguments serialization
 )
 
-from torch.cuda import is_available as is_cuda_available
-from .dataset_loading import DecompilationDataset
+from .model_evaluation import compute_eval_metrics # Custom evaluation-split metrics
+from .dataset_loading import DecompilationDataset # Datasets
+from torch.cuda import is_available as is_cuda_available # CUDA detection
 
 def create_training_args(
     checkpoints_dir: str,
@@ -51,14 +53,13 @@ def create_training_args(
             learning_rate=5e-5, # Small initial learning rate
             weight_decay=0.01, # Small initial weight decay
             eval_strategy="epoch", # Check up with the evaluation dataset every epoch
+            batch_eval_metrics=False, # Collect custom metrics for the entire evaluation split at once
             save_strategy="epoch", # Save the checkpoints every epoch
             save_total_limit=1, # Save at most 1 model candidate every checkpoint
             # Warmup, logging and saving steps
             warmup_steps=100,
             logging_steps=10,
             save_steps=500,
-            # Evaluation_strategy removed for compatibility
-            # Save_strategy may not be supported in older versions, so remove if error persists
             # Use mixed-precision training whenever CUDA is available
             fp16=is_cuda_available(),
             # Misc. settings
@@ -143,7 +144,8 @@ def create_trainer(
             args=training_args,
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
-            data_collator=data_collator
+            data_collator=data_collator,
+            compute_metrics=compute_eval_metrics # Use custom evaluation-split metrics
         )
     except Exception as err:
         print(f"Unable to generate trainer: {err}", file=stderr)
