@@ -179,10 +179,10 @@ def collect_training_metrics(trainer: Trainer, output_dir: str):
         ax.set_ylim(0,1)
         ax.set_yticklabels([f'{(100 * y):.2f}%' for y in ax.get_yticks()]) # Y-axis ticks as percents
 
-        ax.plot("Step", "Precision", label='Precision', markersize=12, data=lines)
-        ax.plot("Step", "Recall", label='Recall', markersize=12, data=lines)
-        ax.plot("Step", "Accuracy", label='Accuracy', markersize=12, data=lines)
-        ax.plot("Step", "F1", label='F1', markersize=12, data=lines)
+        ax.plot("Step", "Precision", label='Precision', markersize=12, color="coral",data=lines)
+        ax.plot("Step", "Recall", label='Recall', markersize=12, color="limegreen", data=lines)
+        ax.plot("Step", "Accuracy", label='Accuracy', markersize=12, color="gold", data=lines)
+        ax.plot("Step", "F1", label='F1', markersize=12, color="darkorchid", data=lines)
 
         # ... With two additional vertical axis
         ax2 = ax.twinx()
@@ -194,10 +194,10 @@ def collect_training_metrics(trainer: Trainer, output_dir: str):
 
         # ... For a time series per-step for the other scores
         ax2.set_ylabel("Perplexity Score")
-        ax2.plot("Step", "Perplexity", label='Perplexity', markersize=12, data=lines)
+        ax2.plot("Step", "Perplexity", label='Perplexity', markersize=12, color="deepskyblue", data=lines)
         
         ax3.set_ylabel("Cross Entropy Loss")
-        ax3.plot("Step", "Cross Entropy Loss", label='Cross Entropy Loss', markersize=12, data=lines)
+        ax3.plot("Step", "Cross Entropy Loss", label='Cross Entropy Loss', markersize=12, color="deeppink", data=lines)
 
         # ... And with a step horizontal axis
         ax.set_xlabel("Step")
@@ -207,9 +207,7 @@ def collect_training_metrics(trainer: Trainer, output_dir: str):
         ax4.set_xlabel("Epoch")
 
         # Add legends and resize layout so it fits into plot
-        ax.legend()
-        ax2.legend()
-        ax3.legend()
+        fig.legend()
         fig.tight_layout()
 
         # Save plot to the appropiate path
