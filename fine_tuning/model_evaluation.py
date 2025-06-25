@@ -13,6 +13,7 @@ from transformers import (
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support, log_loss # Hand-crafted metrics
 from math import exp # ...
 import numpy as np # ...
+from scipy.special import softmax
 
 from torch.cuda import is_available as is_cuda_available # CUDA detection
 
@@ -33,6 +34,10 @@ def compute_eval_metrics(eval_preds: EvalPrediction):
     labels = labels.flatten()
     predicted_labels = predicted_labels.flatten()
     logits = logits.reshape((-1, logits.shape[-1]))
+
+    # ... and also normalize logits, which yields likelihood for each predicted label
+    # For this, we'll use SoftMax, since CausalLM models return the score before SoftMax
+    logits = softmax(logits, axis=1)
 
     # Compute precision, recall and a (semi) balanced fbeta (if balance holds, f1) scores
     precision, recall, f1, _ = precision_recall_fscore_support(
