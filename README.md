@@ -1,6 +1,11 @@
-# 🔥 **Phoenix Decompiler: Rising from the Ashes of Binary** 🔥
+# **Sauron Decompiler**
 
-This repository houses the development of the Phoenix Decompiler, a machine learning-powered project dedicated to the challenging task of decompiling binary executables back into human-readable C source code. Like the mythical phoenix rising from ashes, this project aims to reconstruct the original form and logic from its compiled representation.
+
+<p align="center">
+    <img src="doc/sauron_logo.svg" alt="Sauron Decompiler Logo" width="200"/>
+</p>
+
+This repository houses the development of the Sauron Decompiler, a machine learning-powered project dedicated to the challenging task of decompiling binary executables back into human-readable C source code. Like the mythical phoenix rising from ashes, this project aims to reconstruct the original form and logic from its compiled representation.
 
 **Key Components:**
 
