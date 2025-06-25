@@ -39,6 +39,17 @@ def compute_eval_metrics(eval_preds: EvalPrediction):
     # For this, we'll use SoftMax, since CausalLM models return the score before SoftMax
     logits = softmax(logits, axis=1)
 
+    # Just in case, filter to keep only unmasked tokens. 
+    # Older architecture classes like GPT2 do mask.
+    # See: https://huggingface.co/docs/transformers/en/model_doc/gpt2#transformers.GPT2LMHeadModel.forward.labels
+    # While newer architecture classes, like Llama, don't.
+    # See: https://huggingface.co/docs/transformers/v4.52.3/en/model_doc/llama#transformers.LlamaForTokenClassification.forward.labels
+    unmasked = np.where(labels >= 0)
+
+    labels = labels[unmasked]
+    predicted_labels = predicted_labels[unmasked]
+    logits = logits[unmasked]
+
     # Compute precision, recall and a (semi) balanced fbeta (if balance holds, f1) scores
     precision, recall, f1, _ = precision_recall_fscore_support(
         labels, predicted_labels, 
@@ -50,7 +61,7 @@ def compute_eval_metrics(eval_preds: EvalPrediction):
     accuracy = accuracy_score(labels, predicted_labels)
 
     # Compute cross-entropy loss and perplexity
-    cross_entropy_loss = log_loss(labels, logits)
+    cross_entropy_loss = log_loss(labels, logits, labels=np.arange(logits.shape[1]))
     perplexity = exp(cross_entropy_loss)
 
     # Report scores
