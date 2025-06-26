@@ -50,7 +50,7 @@ def train_model(trainer: Trainer, output_dir: str):
             # Check for possible checkpoints
             checkpoints_assumed = len(listdir(trainer.args.output_dir)) > 0
             logger.info(
-                f"Checkpoints directory is {"non-empty" if checkpoints_assumed else "empty"}. "
+                f"Checkpoints directory is {'non-empty' if checkpoints_assumed else 'empty'}. "
                 + ("Attempting to resume from checkpoints" if checkpoints_assumed else "Writing new checkpoints")
             )
 
