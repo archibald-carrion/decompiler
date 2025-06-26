@@ -141,9 +141,6 @@ def collect_training_metrics(trainer: Trainer, output_dir: str):
         # Lets keep the loss axis unbounded for now
         #ax.set_ylim(0,1)
 
-        ax.plot("Step", "Training Loss", label='Training', markersize=12, data=lines)
-        ax.plot("Step", "Validation Loss", label='Validation', markersize=12, data=lines)
-
         # ... With a step horizontal axis
         ax.set_xlabel("Step")
 
