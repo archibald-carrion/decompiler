@@ -7,6 +7,7 @@ from time import time_ns # Timing
 from .model_loading import input_from_code, output_from_response
 
 # Cuda availability
+from torch.cuda import is_available as is_cuda_available
 
 # Logging
 from sys import stderr
@@ -22,6 +23,10 @@ def decompile(model: PreTrainedModel, tokenizer: PreTrainedTokenizerBase, asm_co
 
     # Construct prompt
     tokenized_prompt = input_from_code(tokenizer, asm_code, tokenize=True).to("cuda")
+
+    # Send it to the appropiate device
+    if is_cuda_available():
+        tokenized_prompt = tokenized_prompt.to("cuda")
 
     # Collect best prediction as response
     start_time = time_ns()

@@ -5,7 +5,8 @@ from os import path # Path resolution
 from sys import stderr # Standard error file
 import torch # PyTorch dataset interface
 from transformers import PreTrainedTokenizerBase # Tokenization
-from ..utils.model_loading import input_from_code 
+from ..utils.model_loading import input_from_code # ...
+from torch.cuda import is_available as is_cuda_available # Parallelization
 
 class DecompilationDataset(torch.utils.data.Dataset):
     """
@@ -106,6 +107,10 @@ class DecompilationDataset(torch.utils.data.Dataset):
         # We need to have uniform embeddings / token sequences
         # See: https://huggingface.co/docs/transformers/en/chat_templating
         tokenized_prompt = input_from_code(self.tokenizer, asm_code, c_code, tokenize=True, pad=True)
+
+        # Send it to the appropiate device
+        if is_cuda_available():
+            tokenized_prompt = tokenized_prompt.to("cuda")
 
         # Construct and return an ordered output
         # See: https://huggingface.co/docs/transformers/glossary#input-ids
