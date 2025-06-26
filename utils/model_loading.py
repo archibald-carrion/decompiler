@@ -17,12 +17,13 @@ from transformers import PreTrainedTokenizerBase # Chat templating
 import re # Matching response inside template
 
 def input_from_code(tokenizer: PreTrainedTokenizerBase, 
-    asm_code: str, c_code: str | None = None, tokenize: bool = False):
+    asm_code: str, c_code: str | None = None, tokenize: bool = False, pad: bool = False):
     # Validate arguments
     assert isinstance(asm_code, str) and len(asm_code) > 0, "x86 code should be a non-empty string"
     assert (isinstance(c_code, str) and len(c_code) > 0) or c_code is None, "C code, if provided, should be a non-empty string"
     assert isinstance(tokenizer, PreTrainedTokenizerBase), "Invalid tokenizer"
     assert isinstance(tokenize, bool), "Tokenize option should be boolean"
+    assert isinstance(pad, bool), "Padding option should be boolean"
 
     # Return prompt based on chat template
     convo = [
@@ -41,12 +42,13 @@ def input_from_code(tokenizer: PreTrainedTokenizerBase,
         convo.append({"role": "assistant", "content": f"<|tool_start|>{c_code}<|tool_end|>"})
 
     return tokenizer.apply_chat_template(
-        convo,
-        tokenize=tokenize, truncation=True, max_length=tokenizer.model_max_length,
-        padding='max_length', return_dict=True, return_tensors='pt'
+        convo, tokenize=True, 
+        truncation=True, padding="max_length" if pad else False, return_dict=True, return_tensors='pt'
+    ) if tokenize else tokenizer.apply_chat_template(
+        convo, tokenize=False, padding="max_length" if pad else False,
     )
 
-def output_from_response(tokenizer: PreTrainedTokenizerBase, asm_code: str, response: str) -> str:
+def output_from_response(tokenizer: PreTrainedTokenizerBase, asm_code: str, response: str) -> str | None:
     # Validate arguments
     assert isinstance(tokenizer, PreTrainedTokenizerBase), "Invalid tokenizer"
     assert isinstance(asm_code, str) and len(asm_code) > 0, "x86 code should be a non-empty string"
@@ -64,7 +66,7 @@ def output_from_response(tokenizer: PreTrainedTokenizerBase, asm_code: str, resp
                 + " correct C, with human-readable and clear syntax. Reply only with the correct result"},
             {"role": "user", "content": f"<|tool_start|>{asm_code}<|tool_end|>"}
         ], 
-        tokenize=False, padding='max_length'
+        tokenize=False, padding=False
     )
 
     assert len(response) >= len(prompt) and response[:len(prompt)] == prompt, "Response doesn't start with proper prompt"
@@ -74,7 +76,7 @@ def output_from_response(tokenizer: PreTrainedTokenizerBase, asm_code: str, resp
 
     # Return the enclosing code in the remainder of the response, or an empty string otherwise
     match = re.search("<\\|tool_start\\|>(.*)<\\|tool_end\\|>", response, re.MULTILINE | re.DOTALL) 
-    return "" if match is None else match.group(1).strip()
+    return None if match is None else match.group(1).strip()
 
 def load_model(model_path: str):
     """ Download the OpenCoder-1.5B-Instruct model and tokenizer to local folder without cache.
