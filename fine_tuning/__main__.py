@@ -67,7 +67,7 @@ def main():
     train_custom_args.add_argument('--seed', type=int, required=False, default=0,
         help='Seed for initial training process. Doesnt guarantee determinism on GPUs')
     train_custom_args.add_argument('--gradient_accum_steps', type=int, required=False, default=8,
-        help='Gradient accumulation steps. Helps manage batch size per device. Lower it if memory is scarce')
+        help='Gradient accumulation steps. Helps manage batch size per device. Raise it if memory is scarce')
     train_custom_args.add_argument('--args_output_path', type=str, required=False, default=None,
         help='Path to JSON file to save custom training argument contents into')
     
