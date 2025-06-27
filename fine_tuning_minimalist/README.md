@@ -1,19 +1,15 @@
-# Fine-tuning OpenCoder Model with Docker on WSL2
+# Fine-tuning DistilGPT2 Model with Docker on WSL2
 
-This guide explains how to set up and run the fine-tuning process for the OpenCoder model using Docker on Windows with WSL2.
+This guide explains how to set up and run the fine-tuning process for the DistilGPT2 model using Docker on Windows with WSL2.
 
 ## Building and Running the Docker Container
 
 Open a WSL2 terminal in your project root and run:
 
 ```sh
-docker build -t decompiler-finetune ./fine_tuning
+docker build -t decompiler-finetune ./fine_tuning_minimalist/
 
-docker run --rm -it \
-  -v "$(pwd)/fine_tuning/model:/app/model" \
-  -v "$(pwd)/fine_tuning/data:/app/data" \
-  -v "$(pwd)/fine_tuning/cache:/app/cache" \
-  decompiler-finetune
+docker run -it --rm -v $(pwd)/models:/app/models -v $(pwd)/data:/app/data decompiler-finetune:latest python decompilation_finetuning.py --train 
 ```
 
 - The script will start fine-tuning using the data and model you provided.
