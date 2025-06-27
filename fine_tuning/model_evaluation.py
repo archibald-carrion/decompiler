@@ -22,66 +22,28 @@ import matplotlib.pyplot as plt # Plotting losses
 from json import dump as json_dump # Serializing metrics
 
 class BatchDecompilerMetrics:
-    def __init__(self, class_count: int):
+    def __init__(self, class_count: int, device: str | torch.device | int):
         assert class_count > 0, "Invalid number of classes"
+
+        # Keep track of device to compute evaluation metrics on
+        self.work_device = device
 
         # Keep track of the universe of classes
         # We'll asume they reside in [0, class_count)
         self.classes = class_count
 
         # Keep track of a fresh confusion matrix
-        self.confusion_matrix = torch.zeros(size=(class_count, class_count), dtype=torch.float)
+        self.confusion_matrix = torch.zeros(
+            size=(class_count, class_count), dtype=torch.float, device=device)
 
         # Keep track of fresh logarithmic loss
         self.log_loss = float(0)
 
     def __call__(self, eval_preds: EvalPrediction, compute_result = False):
-        if compute_result:
-            # Collect metrics precision, accuracy and f1-score based on confusion matrix
-            samples = self.confusion_matrix.sum().item()
-            assert samples > 0, "Tried to collect statistics with no previous work"
-
-            observed = torch.sum(self.confusion_matrix, dim=1)
-            predicted = torch.sum(self.confusion_matrix, dim=0)
-            true_positives = self.confusion_matrix.diagonal()
-            sample_weights = observed / samples
-
-            # ... make sure to filter out where predictions or observations are zero
-            where_predicted = torch.where(predicted > 0)
-            where_observed = torch.where(observed > 0)
-
-            recall = torch.sum((true_positives[where_predicted] / predicted[where_predicted]
-                ) * sample_weights[where_predicted]).item()
-            precision = torch.sum((true_positives[where_observed] / observed[where_observed]
-                ) * sample_weights[where_observed]).item()
-            accuracy = torch.sum(true_positives / samples).item() 
-            f1 = (2 * (precision * recall) / (precision + recall) 
-                if precision + recall > 0 else 0)
-            
-            # Normalize logarithmic loss and collect perplexity
-            log_loss = self.log_loss / samples
-            perplexity = exp(log_loss)
-
-            # Assemble metrics
-            metrics = {
-                "accuracy": accuracy,
-                "precision": precision,
-                "recall": recall,
-                "f1": f1,
-                "cross_entropy_loss": log_loss,
-                "perplexity": perplexity,
-            }
-
-            # Reset trackers for next evaluation cycle
-            self.confusion_matrix = torch.zeros_like(self.confusion_matrix)
-            self.log_loss = float(0)
-
-            # Return metrics
-            return metrics
-        else:
-            # Collect the logits and labels on the same device
+        with torch.no_grad():
+            # Collect the logits and labels on the working device
             logits, labels = eval_preds
-            logits = logits.to(device=labels.device)
+            logits, labels = logits.to(device=self.work_device), labels.to(device=self.work_device)
 
             # We'll asume one-hot encoding
             predicted_labels = torch.argmax(logits, dim=-1)
@@ -103,6 +65,49 @@ class BatchDecompilerMetrics:
             # ... The cross entropy function aready takes care of this with a default of -100 for
             # ignored tokens
             self.log_loss += cross_entropy(logits, labels, reduction="sum").item()
+            
+            # Compute result and reset trackers if also at end of evaluation cycle
+            if compute_result:
+                # Collect metrics precision, accuracy and f1-score based on confusion matrix
+                samples = self.confusion_matrix.sum().item()
+
+                observed = torch.sum(self.confusion_matrix, dim=1)
+                predicted = torch.sum(self.confusion_matrix, dim=0)
+                true_positives = self.confusion_matrix.diagonal()
+                sample_weights = observed / samples
+
+                # ... make sure to filter out where predictions or observations are zero
+                where_predicted = torch.where(predicted > 0)
+                where_observed = torch.where(observed > 0)
+
+                recall = torch.sum((true_positives[where_predicted] / predicted[where_predicted]
+                    ) * sample_weights[where_predicted]).item()
+                precision = torch.sum((true_positives[where_observed] / observed[where_observed]
+                    ) * sample_weights[where_observed]).item()
+                accuracy = torch.sum(true_positives / samples).item() 
+                f1 = (2 * (precision * recall) / (precision + recall) 
+                    if precision + recall > 0 else 0)
+                
+                # Normalize logarithmic loss and collect perplexity
+                log_loss = self.log_loss / samples
+                perplexity = exp(log_loss)
+
+                # Assemble metrics
+                metrics = {
+                    "accuracy": accuracy,
+                    "precision": precision,
+                    "recall": recall,
+                    "f1": f1,
+                    "cross_entropy_loss": log_loss,
+                    "perplexity": perplexity,
+                }
+
+                # Reset trackers for next evaluation cycle
+                self.confusion_matrix = torch.zeros_like(self.confusion_matrix)
+                self.log_loss = float(0)
+
+                # Return metrics
+                return metrics
 
 def collect_training_metrics(trainer: Trainer, output_dir: str):
     # Validate trainer

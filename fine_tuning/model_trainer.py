@@ -145,7 +145,8 @@ def create_trainer(
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
             data_collator=data_collator,
-            compute_metrics=BatchDecompilerMetrics(len(tokenizer)) # Use custom evaluation-split metrics
+            # TODO: Using CPU memory since GPU memory runs out quickly. Refactor?
+            compute_metrics=BatchDecompilerMetrics(len(tokenizer), "cpu") # Use custom evaluation-split metrics
         )
     except Exception as err:
         print(f"Unable to generate trainer: {err}", file=stderr)
