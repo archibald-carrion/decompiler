@@ -10,7 +10,7 @@ from transformers import (
     DataCollatorForLanguageModeling # Data collation
 )
 
-from sklearn.metrics import accuracy_score, precision_recall_fscore_support, log_loss # Hand-crafted metrics
+from sklearn.metrics import log_loss as cross_entropy_loss, confusion_matrix # Hand-crafted metrics
 from math import exp # ...
 import numpy as np # ...
 from scipy.special import softmax
@@ -23,57 +23,94 @@ from .dataset_loading import DecompilationDataset # Datasets
 import matplotlib.pyplot as plt # Plotting losses
 from json import dump as json_dump # Serializing metrics
 
-def compute_eval_metrics(eval_preds: EvalPrediction):
-    # Collect the logits and labels
-    logits, labels = eval_preds
+class BatchDecompilerMetrics:
+    def __init__(self, class_count: int):
+        assert class_count > 0, "Invalid number of classes"
 
-    # We'll asume one-hot encoding
-    predicted_labels : np.ndarray = np.argmax(logits, axis=-1)
+        # Keep track of the universe of classes
+        # We'll asume they reside in [0, class_count)
+        self.classes = np.arange(class_count)
 
-    # Flatten in case we got batches
-    labels = labels.flatten()
-    predicted_labels = predicted_labels.flatten()
-    logits = logits.reshape((-1, logits.shape[-1]))
+        # Keep track of a fresh confusion matrix
+        self.confusion_matrix = np.zeros(shape=(class_count, class_count), dtype=np.uint)
 
-    # ... and also normalize logits, which yields likelihood for each predicted label
-    # For this, we'll use SoftMax, since CausalLM models return the score before SoftMax
-    logits = softmax(logits, axis=1)
+        # Keep track of fresh logarithmic loss
+        self.log_loss = float(0)
 
-    # Just in case, filter to keep only unmasked tokens. 
-    # Older architecture classes like GPT2 do mask.
-    # See: https://huggingface.co/docs/transformers/en/model_doc/gpt2#transformers.GPT2LMHeadModel.forward.labels
-    # While newer architecture classes, like Llama, don't.
-    # See: https://huggingface.co/docs/transformers/v4.52.3/en/model_doc/llama#transformers.LlamaForTokenClassification.forward.labels
-    unmasked = np.where(labels >= 0)
+    def __call__(self, eval_preds: EvalPrediction, compute_result = False):
+        if compute_result:
+            # Collect metrics precision, accuracy and f1-score based on confusion matrix
+            samples = self.confusion_matrix.sum()
+            assert samples > 0, "Tried to collect statistics with no previous work"
 
-    labels = labels[unmasked]
-    predicted_labels = predicted_labels[unmasked]
-    logits = logits[unmasked]
+            observed = self.confusion_matrix.sum(axis=1)
+            predicted = self.confusion_matrix.sum(axis=0)
+            true_positives = self.confusion_matrix.diagonal()
+            sample_weights = (observed / samples)
 
-    # Compute precision, recall and a (semi) balanced fbeta (if balance holds, f1) scores
-    precision, recall, f1, _ = precision_recall_fscore_support(
-        labels, predicted_labels, 
-        # We'll try to balance the classes at the expense of the fbeta score straying away from f1
-        average="weighted", zero_division=np.nan
-    )
+            # ... make sure to filter out where predictions or observations are zero
+            where_predicted = np.where(predicted > 0)
+            where_observed = np.where(observed > 0)
 
-    # Compute accuracy
-    accuracy = accuracy_score(labels, predicted_labels)
+            recall = ((true_positives[where_predicted] / predicted[where_predicted]
+                ) * sample_weights[where_predicted]).sum()
+            precision = ((true_positives[where_observed] / observed[where_observed]
+                ) * sample_weights[where_observed]).sum()
+            accuracy = true_positives.sum() / samples
+            f1 = (2 * (precision * recall) / (precision + recall) 
+                if precision + recall > 0 else 0)
+            
+            # Normalize logarithmic loss and collect perplexity
+            log_loss = self.log_loss / samples
+            perplexity = exp(log_loss)
 
-    # Compute cross-entropy loss and perplexity
-    cross_entropy_loss = log_loss(labels, logits, labels=np.arange(logits.shape[1]))
-    perplexity = exp(cross_entropy_loss)
+            # Assemble metrics
+            metrics = {
+                "accuracy": accuracy,
+                "precision": precision,
+                "recall": recall,
+                "f1": f1,
+                "cross_entropy_loss": log_loss,
+                "perplexity": perplexity,
+            }
 
-    # Report scores
-    return {
-        "accuracy": accuracy,
-        "precision": precision,
-        "recall": recall,
-        "f1": f1,
-        "cross_entropy_loss": cross_entropy_loss,
-        "perplexity": perplexity,
-    }
-    
+            # Reset trackers for next evaluation cycle
+            self.confusion_matrix = np.zeros_like(self.confusion_matrix)
+            self.log_loss = float(0)
+
+            # Return metrics
+            return metrics
+        else:
+            # Collect the logits and labels
+            logits, labels = eval_preds
+
+            # We'll asume one-hot encoding
+            predicted_labels : np.ndarray = np.argmax(logits, axis=-1)
+
+            # Flatten in case we got batches
+            labels = labels.flatten()
+            predicted_labels = predicted_labels.flatten()
+            logits = logits.reshape((-1, logits.shape[-1]))
+
+            # ... and also normalize logits, which yields likelihood for each predicted label
+            # For this, we'll use SoftMax, since CausalLM models return the score before SoftMax
+            logits = softmax(logits, axis=1)
+
+            # Just in case, filter to keep only unmasked tokens. 
+            # Older architecture classes like GPT2 do mask.
+            # See: https://huggingface.co/docs/transformers/en/model_doc/gpt2#transformers.GPT2LMHeadModel.forward.labels
+            # While newer architecture classes, like Llama, don't.
+            # See: https://huggingface.co/docs/transformers/v4.52.3/en/model_doc/llama#transformers.LlamaForTokenClassification.forward.labels
+            unmasked = np.where(labels >= 0)
+
+            labels = labels[unmasked]
+            predicted_labels = predicted_labels[unmasked]
+            logits = logits[unmasked]
+
+            # Update our confusion matrix and logarithmic loss trackers
+            self.confusion_matrix += confusion_matrix(labels, predicted_labels, labels=self.classes)
+            self.log_loss += cross_entropy_loss(labels, logits, labels=self.classes, normalize=False)
+
 def collect_training_metrics(trainer: Trainer, output_dir: str):
     # Validate trainer
     assert isinstance(trainer, Trainer), "Trainer parameter should be a HF Trainer"

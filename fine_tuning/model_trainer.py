@@ -11,7 +11,7 @@ from transformers import (
     HfArgumentParser # Training arguments serialization
 )
 
-from .model_evaluation import compute_eval_metrics # Custom evaluation-split metrics
+from .model_evaluation import BatchDecompilerMetrics # Custom evaluation-split metrics
 from .dataset_loading import DecompilationDataset # Datasets
 from torch.cuda import is_available as is_cuda_available # CUDA detection
 
@@ -50,11 +50,11 @@ def create_training_args(
             num_train_epochs=training_epochs,
             auto_find_batch_size=True, # Find batch sizes that fit into memory. Requires 'accelerate' package
             gradient_accumulation_steps=gradient_accum_steps, # So we don't run out of CUDA memory when doing gradient descent
-            eval_accumulation_steps=gradient_accum_steps, # (...) when running evaluations
+            eval_accumulation_steps=1, # (...) and when running evaluations
             learning_rate=5e-5, # Small initial learning rate
             weight_decay=0.01, # Small initial weight decay
             eval_strategy="epoch", # Check up with the evaluation dataset every epoch
-            batch_eval_metrics=False, # Collect custom metrics for the entire evaluation split at once
+            batch_eval_metrics=True, # Collect custom metrics for the entire evaluation split in batches
             save_strategy="epoch", # Save the checkpoints every epoch
             save_total_limit=1, # Save at most 1 model candidate every checkpoint
             # Warmup, logging and saving steps
@@ -145,7 +145,7 @@ def create_trainer(
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
             data_collator=data_collator,
-            compute_metrics=compute_eval_metrics # Use custom evaluation-split metrics
+            compute_metrics=BatchDecompilerMetrics(tokenizer.model_max_length) # Use custom evaluation-split metrics
         )
     except Exception as err:
         print(f"Unable to generate trainer: {err}", file=stderr)
