@@ -14,7 +14,7 @@ import torch # Hand-crafted metrics on the GPU (if possible)...
 from torch.nn.functional import cross_entropy # ... 
 from torcheval.metrics.functional import multiclass_confusion_matrix # ...
 from math import exp # ...
-from numpy import nan as np_nan # Mark values as missing when plotting
+from numpy import nan as np_nan, float64 as np_float64 # Mark values as missing when plotting
 
 from transformers.modelcard import parse_log_history # Human-readable metric parsing
 from .dataset_loading import DecompilationDataset # Datasets
@@ -138,7 +138,7 @@ def collect_training_metrics(trainer: Trainer, output_dir: str):
 
     # ... and mark as missing entries non-number like (like "No Log")
     lines = {
-        indicator: [entry if isinstance(entry, (int, float)) else np_nan for entry in lines[indicator]]
+        indicator: [entry if isinstance(entry, (int, float, np_float64)) else np_nan for entry in lines[indicator]]
         for indicator in indicators
     }
 
@@ -227,8 +227,8 @@ def collect_training_metrics(trainer: Trainer, output_dir: str):
 
         # TODO: Check for axis boundaries
         # These may be super small and hard to make legible, so for now lets allow them to decide
-        # the boundaries
-        #ax.set_ylim(0,1)
+        # the upper boundaries
+        ax.set_ylim(bottom=0)
         ax.set_yticklabels([f'{(100 * y):.2f}%' for y in ax.get_yticks()]) # Y-axis ticks as percents
 
         # ... And with a step horizontal axis
@@ -266,15 +266,18 @@ def collect_training_metrics(trainer: Trainer, output_dir: str):
 
         # ... With a time series per-step for training and validation losses
         ax.set_title('LM model metrics over training')
-        ax.set_ylabel("Value")
+        ax.set_ylabel("Perplexity")
+        ax_other = ax.twinx()
+        ax_other.set_ylabel("Cross Entropy Loss")
 
         ax.plot("Step", "Perplexity", label='Perplexity', markersize=12, color="deepskyblue", data=lines)
-        ax.plot("Step", "Cross Entropy Loss", label='Cross Entropy Loss', markersize=12, color="deeppink", data=lines)
+        ax_other.plot("Step", "Cross Entropy Loss", label='Cross Entropy Loss', markersize=12, color="deeppink", data=lines)
 
         # TODO: Check for measurments axis' boundaries
         # Loss may possibly be unbound (the default CausalLM loss is cross-entropy, for example)
         # Lets keep the loss axis unbounded for now
-        #ax.set_ylim(0,1)
+        ax.set_ylim(bottom=0)
+        ax_other.set_ylim(bottom=0)
 
         # ... With a step horizontal axis
         ax.set_xlabel("Step")
