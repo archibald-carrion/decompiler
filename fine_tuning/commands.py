@@ -131,15 +131,17 @@ def eval_model(model_path: str, dataset_dir: str, train_args_path: str, output_d
     test_dataset = "test.csv"
     print(f"Loading dataset from {dataset_dir} (with split '{test_dataset}')...")
     try:
-        test_dataset = DecompilationDataset(dataset_dir, test_dataset, tokenizer)
+        test_dataset = DecompilationDataset(test_dataset, dataset_dir, tokenizer)
         print("Dataset loaded succesfully!")
     except Exception as err:
         print(f"Unable to test split dataset test due to error: {err}", file=stderr)
         raise Exception("Invalid dataset loading")
     
     # Try collecting metrics on the testing dataset
+    print(f"Collecting metrics into {output_dir}...")
     try:
         collect_test_metrics(model, tokenizer, train_args, test_dataset, output_dir)
+        print("Metrics collected succesfully!")
     except Exception as err:
         print(f"Unable to collect metrics on test split due to error: {err}", file=stderr)
         raise Exception("Invalid metric collection")
