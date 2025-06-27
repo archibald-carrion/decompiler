@@ -32,7 +32,7 @@ class BatchDecompilerMetrics:
         self.classes = np.arange(class_count)
 
         # Keep track of a fresh confusion matrix
-        self.confusion_matrix = np.zeros(shape=(class_count, class_count), dtype=np.uint)
+        self.confusion_matrix = np.zeros(shape=(class_count, class_count), dtype=np.float64)
 
         # Keep track of fresh logarithmic loss
         self.log_loss = float(0)
