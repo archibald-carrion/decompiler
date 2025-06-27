@@ -81,8 +81,9 @@ class BatchDecompilerMetrics:
             # Return metrics
             return metrics
         else:
-            # Collect the logits and labels
+            # Collect the logits and labels on the cpu
             logits, labels = eval_preds
+            logits, labels = logits.cpu().numpy(), labels.cpu().numpy() 
 
             # We'll asume one-hot encoding
             predicted_labels : np.ndarray = np.argmax(logits, axis=-1)
