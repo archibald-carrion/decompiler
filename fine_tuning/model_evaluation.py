@@ -91,20 +91,17 @@ class BatchDecompilerMetrics:
             predicted_labels = predicted_labels.flatten()
             logits = logits.reshape((-1, logits.shape[-1]))
 
-            # Just in case, filter to keep only unmasked tokens. 
-            # Older architecture classes like GPT2 do mask.
-            # See: https://huggingface.co/docs/transformers/en/model_doc/gpt2#transformers.GPT2LMHeadModel.forward.labels
-            # While newer architecture classes, like Llama, don't.
-            # See: https://huggingface.co/docs/transformers/v4.52.3/en/model_doc/llama#transformers.LlamaForTokenClassification.forward.labels
-            unmasked = torch.where(labels >= 0)
-
-            labels = labels[unmasked]
-            predicted_labels = predicted_labels[unmasked]
-            logits = logits[unmasked]
-
             # Update our confusion matrix and logarithmic loss trackers
-            self.confusion_matrix += multiclass_confusion_matrix(predicted_labels, labels, self.classes
-                ).to(device=self.confusion_matrix.device)
+
+            # ... When working the multiclass confusion matrix, submit only those predictions that
+            # are NOT to be ignored / masked (e.g. labels with index -100)
+            unmasked = torch.where(labels >= 0)
+            self.confusion_matrix += multiclass_confusion_matrix(
+                predicted_labels[unmasked], labels[unmasked], self.classes
+            ).to(device=self.confusion_matrix.device)
+
+            # ... The cross entropy function aready takes care of this with a default of -100 for
+            # ignored tokens
             self.log_loss += cross_entropy(logits, labels, reduction="sum").item()
 
 def collect_training_metrics(trainer: Trainer, output_dir: str):
