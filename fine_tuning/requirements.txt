@@ -65,6 +65,7 @@ threadpoolctl==3.6.0
 tokenizers==0.21.1
 torch==2.7.1
 torchaudio==2.7.1
+torcheval==0.0.7
 torchvision==0.22.1
 tqdm==4.67.1
 traitlets==5.14.3
