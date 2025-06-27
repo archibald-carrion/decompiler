@@ -1,0 +1,43 @@
+	.file	"to_lower.c"
+	.text
+	.globl	to_lower
+	.type	to_lower, @function
+to_lower:
+.LFB0:
+	.cfi_startproc
+	endbr64
+.L2:
+	movb	(%rdi), %al
+	testb	%al, %al
+	je	.L6
+	leal	-65(%rax), %edx
+	cmpb	$25, %dl
+	ja	.L3
+	addl	$32, %eax
+	movb	%al, (%rdi)
+.L3:
+	incq	%rdi
+	jmp	.L2
+.L6:
+	ret
+	.cfi_endproc
+.LFE0:
+	.size	to_lower, .-to_lower
+	.ident	"GCC: (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0"
+	.section	.note.GNU-stack,"",@progbits
+	.section	.note.gnu.property,"a"
+	.align 8
+	.long	1f - 0f
+	.long	4f - 1f
+	.long	5
+0:
+	.string	"GNU"
+1:
+	.align 8
+	.long	0xc0000002
+	.long	3f - 2f
+2:
+	.long	0x3
+3:
+	.align 8
+4:
