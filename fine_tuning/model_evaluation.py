@@ -14,6 +14,7 @@ import torch # Hand-crafted metrics on the GPU (if possible)...
 from torch.nn.functional import cross_entropy # ... 
 from torcheval.metrics.functional import multiclass_confusion_matrix # ...
 from math import exp # ...
+from numpy import nan as np_nan # Mark values as missing when plotting
 
 from transformers.modelcard import parse_log_history # Human-readable metric parsing
 from .dataset_loading import DecompilationDataset # Datasets
@@ -135,6 +136,12 @@ def collect_training_metrics(trainer: Trainer, output_dir: str):
     indicators = list(lines[0].keys())
     lines = {indicator: [line[indicator] for line in lines] for indicator in indicators}
 
+    # ... and mark as missing entries non-number like (like "No Log")
+    lines = {
+        indicator: [entry if isinstance(entry, (int, float)) else np_nan for entry in lines[indicator]]
+        for indicator in indicators
+    }
+
     # ... With a correspondence between the epochs and steps unit
     batch_size = (
         # Batch size per pass, from all devices
@@ -165,11 +172,11 @@ def collect_training_metrics(trainer: Trainer, output_dir: str):
         fig, ax = plt.subplots(nrows=1, ncols=1)
 
         # ... With a time series per-step for training and validation losses
-        ax.plot("Step", "Training Loss", label='Training', markersize=12, data=lines)
-        ax.plot("Step", "Validation Loss", label='Validation', markersize=12, data=lines)
         ax.set_title('Model loss over training')
         ax.set_ylabel("Loss")
-        ax.legend()
+
+        ax.plot("Step", "Training Loss", label='Training', markersize=12, data=lines)
+        ax.plot("Step", "Validation Loss", label='Validation', markersize=12, data=lines)
 
         # TODO: Check for loss axis' boundaries
         # Loss may possibly be unbound (the default CausalLM loss is cross-entropy, for example)
@@ -183,7 +190,8 @@ def collect_training_metrics(trainer: Trainer, output_dir: str):
         ax2 = ax.secondary_xaxis("top", functions=(to_epoch, to_step))
         ax2.set_xlabel("Epoch")
 
-        # Resize layout so it fits into plot
+        # Add legends and resize layout so it fits into plot
+        fig.legend(loc="outside upper right")
         fig.tight_layout()
 
         # Save plot to the appropiate path
@@ -211,38 +219,27 @@ def collect_training_metrics(trainer: Trainer, output_dir: str):
         # ... With a time series per-step for each categorization metric
         ax.set_title('Model metrics for evaluation split per step')
         ax.set_ylabel("%")
-        ax.set_ylim(0,1)
-        ax.set_yticklabels([f'{(100 * y):.2f}%' for y in ax.get_yticks()]) # Y-axis ticks as percents
 
         ax.plot("Step", "Precision", label='Precision', markersize=12, color="coral",data=lines)
         ax.plot("Step", "Recall", label='Recall', markersize=12, color="limegreen", data=lines)
         ax.plot("Step", "Accuracy", label='Accuracy', markersize=12, color="gold", data=lines)
         ax.plot("Step", "F1", label='F1', markersize=12, color="darkorchid", data=lines)
 
-        # ... With two additional vertical axis
-        ax2 = ax.twinx()
-        ax2.spines["right"].set_visible(True)
-
-        ax3 = ax.twinx()
-        ax3.spines["right"].set_position(("axes", 1.5))
-        ax3.spines["right"].set_visible(True)
-
-        # ... For a time series per-step for the other scores
-        ax2.set_ylabel("Perplexity Score")
-        ax2.plot("Step", "Perplexity", label='Perplexity', markersize=12, color="deepskyblue", data=lines)
-        
-        ax3.set_ylabel("Cross Entropy Loss")
-        ax3.plot("Step", "Cross Entropy Loss", label='Cross Entropy Loss', markersize=12, color="deeppink", data=lines)
+        # TODO: Check for axis boundaries
+        # These may be super small and hard to make legible, so for now lets allow them to decide
+        # the boundaries
+        #ax.set_ylim(0,1)
+        ax.set_yticklabels([f'{(100 * y):.2f}%' for y in ax.get_yticks()]) # Y-axis ticks as percents
 
         # ... And with a step horizontal axis
         ax.set_xlabel("Step")
 
         # ... And an additional epoch horizontal axis
-        ax4 = ax.secondary_xaxis("top", functions=(to_epoch, to_step))
-        ax4.set_xlabel("Epoch")
+        ax2 = ax.secondary_xaxis("top", functions=(to_epoch, to_step))
+        ax2.set_xlabel("Epoch")
 
         # Add legends and resize layout so it fits into plot
-        fig.legend()
+        fig.legend(loc="outside upper right")
         fig.tight_layout()
 
         # Save plot to the appropiate path
@@ -258,6 +255,51 @@ def collect_training_metrics(trainer: Trainer, output_dir: str):
 
     except Exception as err:
         print(f"Unhandled error while generating plot for evaluation-split metrics: {err}", file=stderr)
+        print("Skipping plot generation...", file=stderr)
+
+    # Generate LM-metrics-per-step plot
+    fig_path = path.join(output_dir, "lm_metrics_per_step.png")
+    print(f"Creating step-LM-metrics plot into {fig_path}")
+    try:
+        # ... Make it a single-celled plot
+        fig, ax = plt.subplots(nrows=1, ncols=1)
+
+        # ... With a time series per-step for training and validation losses
+        ax.set_title('LM model metrics over training')
+        ax.set_ylabel("Value")
+
+        ax.plot("Step", "Perplexity", label='Perplexity', markersize=12, color="deepskyblue", data=lines)
+        ax.plot("Step", "Cross Entropy Loss", label='Cross Entropy Loss', markersize=12, color="deeppink", data=lines)
+
+        # TODO: Check for measurments axis' boundaries
+        # Loss may possibly be unbound (the default CausalLM loss is cross-entropy, for example)
+        # Lets keep the loss axis unbounded for now
+        #ax.set_ylim(0,1)
+
+        # ... With a step horizontal axis
+        ax.set_xlabel("Step")
+
+        # ... And an additional epoch horizontal axis
+        ax2 = ax.secondary_xaxis("top", functions=(to_epoch, to_step))
+        ax2.set_xlabel("Epoch")
+
+        # Add legends and resize layout so it fits into plot
+        fig.legend(loc="outside upper right")
+        fig.tight_layout()
+
+        # Save plot to the appropiate path
+        try:
+            fig.savefig(fig_path)
+            print(f"Saved step-LM-metrics plot into {fig_path} succesfully")
+        except Exception as err:
+            print(f"Unable to save step-LM-metrics plot into {fig_path}: {err}", file=stderr)
+            print(f"Skipping plot saving...", file=stderr)
+
+        # Clear memory and close the plot
+        plt.close(fig)
+
+    except Exception as err:
+        print(f"Unhandled error while generating plot for training loss: {err}", file=stderr)
         print("Skipping plot generation...", file=stderr)
 
     # Save formatted training statistics

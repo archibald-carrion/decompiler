@@ -53,13 +53,17 @@ def create_training_args(
             eval_accumulation_steps=1, # (...) and when running evaluations
             learning_rate=5e-5, # Small initial learning rate
             weight_decay=0.01, # Small initial weight decay
-            eval_strategy="epoch", # Check up with the evaluation dataset every epoch
+            eval_strategy="steps", # Check up with the evaluation dataset every 5% of the way
+            eval_steps=0.05, 
             batch_eval_metrics=True, # Collect custom metrics for the entire evaluation split in batches
-            save_strategy="epoch", # Save the checkpoints every epoch
+            save_strategy="steps", # Save the checkpoints every 5% of the way
+            save_steps=0.05, 
             save_total_limit=1, # Save at most 1 model candidate every checkpoint
-            # Warmup, logging and saving steps
+            # Warmup for a couple of steps just to be sure
             warmup_steps=100,
-            logging_steps=10,
+            # Log losses every 5% of the way
+            logging_strategy="steps",
+            logging_steps=0.05,
             # Use mixed-precision training whenever CUDA is available
             fp16=is_cuda_available(),
             # Misc. settings
