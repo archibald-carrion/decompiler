@@ -10,12 +10,11 @@ from transformers import (
     DataCollatorForLanguageModeling # Data collation
 )
 
-from sklearn.metrics import accuracy_score, precision_recall_fscore_support, log_loss # Hand-crafted metrics
+import torch # Hand-crafted metrics on the GPU (if possible)...
+from torch.nn.functional import cross_entropy # ... 
+from torcheval.metrics.functional import multiclass_confusion_matrix # ...
 from math import exp # ...
-import numpy as np # ...
-from scipy.special import softmax
-
-from torch.cuda import is_available as is_cuda_available # CUDA detection
+from numpy import nan as np_nan, float64 as np_float64 # Mark values as missing when plotting
 
 from transformers.modelcard import parse_log_history # Human-readable metric parsing
 from .dataset_loading import DecompilationDataset # Datasets
@@ -23,57 +22,94 @@ from .dataset_loading import DecompilationDataset # Datasets
 import matplotlib.pyplot as plt # Plotting losses
 from json import dump as json_dump # Serializing metrics
 
-def compute_eval_metrics(eval_preds: EvalPrediction):
-    # Collect the logits and labels
-    logits, labels = eval_preds
+class BatchDecompilerMetrics:
+    def __init__(self, class_count: int, device: str | torch.device | int):
+        assert class_count > 0, "Invalid number of classes"
 
-    # We'll asume one-hot encoding
-    predicted_labels : np.ndarray = np.argmax(logits, axis=-1)
+        # Keep track of device to compute evaluation metrics on
+        self.work_device = device
 
-    # Flatten in case we got batches
-    labels = labels.flatten()
-    predicted_labels = predicted_labels.flatten()
-    logits = logits.reshape((-1, logits.shape[-1]))
+        # Keep track of the universe of classes
+        # We'll asume they reside in [0, class_count)
+        self.classes = class_count
 
-    # ... and also normalize logits, which yields likelihood for each predicted label
-    # For this, we'll use SoftMax, since CausalLM models return the score before SoftMax
-    logits = softmax(logits, axis=1)
+        # Keep track of a fresh confusion matrix
+        self.confusion_matrix = torch.zeros(
+            size=(class_count, class_count), dtype=torch.float, device=device)
 
-    # Just in case, filter to keep only unmasked tokens. 
-    # Older architecture classes like GPT2 do mask.
-    # See: https://huggingface.co/docs/transformers/en/model_doc/gpt2#transformers.GPT2LMHeadModel.forward.labels
-    # While newer architecture classes, like Llama, don't.
-    # See: https://huggingface.co/docs/transformers/v4.52.3/en/model_doc/llama#transformers.LlamaForTokenClassification.forward.labels
-    unmasked = np.where(labels >= 0)
+        # Keep track of fresh logarithmic loss
+        self.log_loss = float(0)
 
-    labels = labels[unmasked]
-    predicted_labels = predicted_labels[unmasked]
-    logits = logits[unmasked]
+    def __call__(self, eval_preds: EvalPrediction, compute_result = False):
+        with torch.no_grad():
+            # Collect the logits and labels on the working device
+            logits, labels = eval_preds
+            logits, labels = logits.to(device=self.work_device), labels.to(device=self.work_device)
 
-    # Compute precision, recall and a (semi) balanced fbeta (if balance holds, f1) scores
-    precision, recall, f1, _ = precision_recall_fscore_support(
-        labels, predicted_labels, 
-        # We'll try to balance the classes at the expense of the fbeta score straying away from f1
-        average="weighted", zero_division=np.nan
-    )
+            # We'll asume one-hot encoding
+            predicted_labels = torch.argmax(logits, dim=-1)
 
-    # Compute accuracy
-    accuracy = accuracy_score(labels, predicted_labels)
+            # Flatten in case we got batches
+            labels = labels.flatten()
+            predicted_labels = predicted_labels.flatten()
+            logits = logits.reshape((-1, logits.shape[-1]))
 
-    # Compute cross-entropy loss and perplexity
-    cross_entropy_loss = log_loss(labels, logits, labels=np.arange(logits.shape[1]))
-    perplexity = exp(cross_entropy_loss)
+            # Update our confusion matrix and logarithmic loss trackers
 
-    # Report scores
-    return {
-        "accuracy": accuracy,
-        "precision": precision,
-        "recall": recall,
-        "f1": f1,
-        "cross_entropy_loss": cross_entropy_loss,
-        "perplexity": perplexity,
-    }
-    
+            # ... When working the multiclass confusion matrix, submit only those predictions that
+            # are NOT to be ignored / masked (e.g. labels with index -100)
+            unmasked = torch.where(labels >= 0)
+            self.confusion_matrix += multiclass_confusion_matrix(
+                predicted_labels[unmasked], labels[unmasked], self.classes
+            ).to(device=self.confusion_matrix.device)
+
+            # ... The cross entropy function aready takes care of this with a default of -100 for
+            # ignored tokens
+            self.log_loss += cross_entropy(logits, labels, reduction="sum").item()
+            
+            # Compute result and reset trackers if also at end of evaluation cycle
+            if compute_result:
+                # Collect metrics precision, accuracy and f1-score based on confusion matrix
+                samples = self.confusion_matrix.sum().item()
+
+                observed = torch.sum(self.confusion_matrix, dim=1)
+                predicted = torch.sum(self.confusion_matrix, dim=0)
+                true_positives = self.confusion_matrix.diagonal()
+                sample_weights = observed / samples
+
+                # ... make sure to filter out where predictions or observations are zero
+                where_predicted = torch.where(predicted > 0)
+                where_observed = torch.where(observed > 0)
+
+                recall = torch.sum((true_positives[where_predicted] / predicted[where_predicted]
+                    ) * sample_weights[where_predicted]).item()
+                precision = torch.sum((true_positives[where_observed] / observed[where_observed]
+                    ) * sample_weights[where_observed]).item()
+                accuracy = torch.sum(true_positives / samples).item() 
+                f1 = (2 * (precision * recall) / (precision + recall) 
+                    if precision + recall > 0 else 0)
+                
+                # Normalize logarithmic loss and collect perplexity
+                log_loss = self.log_loss / samples
+                perplexity = exp(log_loss)
+
+                # Assemble metrics
+                metrics = {
+                    "accuracy": accuracy,
+                    "precision": precision,
+                    "recall": recall,
+                    "f1": f1,
+                    "cross_entropy_loss": log_loss,
+                    "perplexity": perplexity,
+                }
+
+                # Reset trackers for next evaluation cycle
+                self.confusion_matrix = torch.zeros_like(self.confusion_matrix)
+                self.log_loss = float(0)
+
+                # Return metrics
+                return metrics
+
 def collect_training_metrics(trainer: Trainer, output_dir: str):
     # Validate trainer
     assert isinstance(trainer, Trainer), "Trainer parameter should be a HF Trainer"
@@ -99,6 +135,12 @@ def collect_training_metrics(trainer: Trainer, output_dir: str):
     # Turn them into a time series
     indicators = list(lines[0].keys())
     lines = {indicator: [line[indicator] for line in lines] for indicator in indicators}
+
+    # ... and mark as missing entries non-number like (like "No Log")
+    lines = {
+        indicator: [entry if isinstance(entry, (int, float, np_float64)) else np_nan for entry in lines[indicator]]
+        for indicator in indicators
+    }
 
     # ... With a correspondence between the epochs and steps unit
     batch_size = (
@@ -130,11 +172,11 @@ def collect_training_metrics(trainer: Trainer, output_dir: str):
         fig, ax = plt.subplots(nrows=1, ncols=1)
 
         # ... With a time series per-step for training and validation losses
-        ax.plot("Step", "Training Loss", label='Training', markersize=12, data=lines)
-        ax.plot("Step", "Validation Loss", label='Validation', markersize=12, data=lines)
         ax.set_title('Model loss over training')
         ax.set_ylabel("Loss")
-        ax.legend()
+
+        ax.plot("Step", "Training Loss", label='Training', markersize=12, data=lines)
+        ax.plot("Step", "Validation Loss", label='Validation', markersize=12, data=lines)
 
         # TODO: Check for loss axis' boundaries
         # Loss may possibly be unbound (the default CausalLM loss is cross-entropy, for example)
@@ -148,7 +190,8 @@ def collect_training_metrics(trainer: Trainer, output_dir: str):
         ax2 = ax.secondary_xaxis("top", functions=(to_epoch, to_step))
         ax2.set_xlabel("Epoch")
 
-        # Resize layout so it fits into plot
+        # Add legends and resize layout so it fits into plot
+        fig.legend(loc="outside upper right")
         fig.tight_layout()
 
         # Save plot to the appropiate path
@@ -176,38 +219,27 @@ def collect_training_metrics(trainer: Trainer, output_dir: str):
         # ... With a time series per-step for each categorization metric
         ax.set_title('Model metrics for evaluation split per step')
         ax.set_ylabel("%")
-        ax.set_ylim(0,1)
-        ax.set_yticklabels([f'{(100 * y):.2f}%' for y in ax.get_yticks()]) # Y-axis ticks as percents
 
         ax.plot("Step", "Precision", label='Precision', markersize=12, color="coral",data=lines)
         ax.plot("Step", "Recall", label='Recall', markersize=12, color="limegreen", data=lines)
         ax.plot("Step", "Accuracy", label='Accuracy', markersize=12, color="gold", data=lines)
         ax.plot("Step", "F1", label='F1', markersize=12, color="darkorchid", data=lines)
 
-        # ... With two additional vertical axis
-        ax2 = ax.twinx()
-        ax2.spines["right"].set_visible(True)
-
-        ax3 = ax.twinx()
-        ax3.spines["right"].set_position(("axes", 1.5))
-        ax3.spines["right"].set_visible(True)
-
-        # ... For a time series per-step for the other scores
-        ax2.set_ylabel("Perplexity Score")
-        ax2.plot("Step", "Perplexity", label='Perplexity', markersize=12, color="deepskyblue", data=lines)
-        
-        ax3.set_ylabel("Cross Entropy Loss")
-        ax3.plot("Step", "Cross Entropy Loss", label='Cross Entropy Loss', markersize=12, color="deeppink", data=lines)
+        # TODO: Check for axis boundaries
+        # These may be super small and hard to make legible, so for now lets allow them to decide
+        # the upper boundaries
+        ax.set_ylim(bottom=0)
+        ax.set_yticklabels([f'{(100 * y):.2f}%' for y in ax.get_yticks()]) # Y-axis ticks as percents
 
         # ... And with a step horizontal axis
         ax.set_xlabel("Step")
 
         # ... And an additional epoch horizontal axis
-        ax4 = ax.secondary_xaxis("top", functions=(to_epoch, to_step))
-        ax4.set_xlabel("Epoch")
+        ax2 = ax.secondary_xaxis("top", functions=(to_epoch, to_step))
+        ax2.set_xlabel("Epoch")
 
         # Add legends and resize layout so it fits into plot
-        fig.legend()
+        fig.legend(loc="outside upper right")
         fig.tight_layout()
 
         # Save plot to the appropiate path
@@ -223,6 +255,54 @@ def collect_training_metrics(trainer: Trainer, output_dir: str):
 
     except Exception as err:
         print(f"Unhandled error while generating plot for evaluation-split metrics: {err}", file=stderr)
+        print("Skipping plot generation...", file=stderr)
+
+    # Generate LM-metrics-per-step plot
+    fig_path = path.join(output_dir, "lm_metrics_per_step.png")
+    print(f"Creating step-LM-metrics plot into {fig_path}")
+    try:
+        # ... Make it a single-celled plot
+        fig, ax = plt.subplots(nrows=1, ncols=1)
+
+        # ... With a time series per-step for training and validation losses
+        ax.set_title('LM model metrics over training')
+        ax.set_ylabel("Perplexity")
+        ax_other = ax.twinx()
+        ax_other.set_ylabel("Cross Entropy Loss")
+
+        ax.plot("Step", "Perplexity", label='Perplexity', markersize=12, color="deepskyblue", data=lines)
+        ax_other.plot("Step", "Cross Entropy Loss", label='Cross Entropy Loss', markersize=12, color="deeppink", data=lines)
+
+        # TODO: Check for measurments axis' boundaries
+        # Loss may possibly be unbound (the default CausalLM loss is cross-entropy, for example)
+        # Lets keep the loss axis unbounded for now
+        ax.set_ylim(bottom=0)
+        ax_other.set_ylim(bottom=0)
+
+        # ... With a step horizontal axis
+        ax.set_xlabel("Step")
+
+        # ... And an additional epoch horizontal axis
+        ax2 = ax.secondary_xaxis("top", functions=(to_epoch, to_step))
+        ax2.set_xlabel("Epoch")
+
+        # Add legends and resize layout so it fits into plot
+        fig.legend(loc="outside upper right")
+        fig.tight_layout()
+
+        # Save plot to the appropiate path
+        try:
+            fig.savefig(fig_path)
+            print(f"Saved step-LM-metrics plot into {fig_path} succesfully")
+        except Exception as err:
+            print(f"Unable to save step-LM-metrics plot into {fig_path}: {err}", file=stderr)
+            print(f"Skipping plot saving...", file=stderr)
+
+        # Clear memory and close the plot
+        plt.close(fig)
+
+    except Exception as err:
+        print(f"Unhandled error while generating plot for training loss: {err}", file=stderr)
         print("Skipping plot generation...", file=stderr)
 
     # Save formatted training statistics

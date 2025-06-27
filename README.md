@@ -44,7 +44,13 @@ cd decompiler
 ```
 
 ### 2. Install dependencies
+When preprocesing:
 ```sh
+pip install -r preprocessing/requirements.txt
+```
+
+When running demo:
+```
 pip install -r fine_tuning/requirements.txt
 pip install -r web/requirements.txt
 ```
