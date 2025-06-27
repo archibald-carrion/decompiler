@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Minimal Assembly Decompiler Comparison
-Sends assembly to both models and outputs JSON with results
+Sends assembly to three models and outputs JSON with results
 """
 
 import os
@@ -14,6 +14,7 @@ import glob
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_MODEL_DIR = os.path.join(SCRIPT_DIR, "models", "distilgpt2")
 FINETUNED_MODEL_DIR = os.path.join(SCRIPT_DIR, "models", "decompiler_model")
+FINETUNED_MODEL_V2_DIR = os.path.join(SCRIPT_DIR, "models", "decompiler_model_v2")
 VALIDATION_DATA_DIR = os.path.join(SCRIPT_DIR, "data_validation")
 
 def load_model(model_dir):
@@ -105,6 +106,7 @@ def main():
     print("Loading models...")
     base_model, base_tokenizer, base_device = load_model(BASE_MODEL_DIR)
     ft_model, ft_tokenizer, ft_device = load_model(FINETUNED_MODEL_DIR)
+    ft_model_v2, ft_tokenizer_v2, ft_device_v2 = load_model(FINETUNED_MODEL_V2_DIR)
     
     # Load validation data
     print("Loading validation data...")
@@ -122,6 +124,9 @@ def main():
         # Generate with fine-tuned model
         ft_output = generate_c_code(ft_model, ft_tokenizer, ft_device, pair['assembly'])
         
+        # Generate with fine-tuned model v2
+        ft_output_v2 = generate_c_code(ft_model_v2, ft_tokenizer_v2, ft_device_v2, pair['assembly'])
+        
         # Store result
         result = {
             'filename': pair['filename'],
@@ -129,13 +134,14 @@ def main():
             'assembly': pair['assembly'],
             'correct_c': pair['correct_c'],
             'base_model_output': base_output,
-            'finetuned_model_output': ft_output
+            'finetuned_model_output': ft_output,
+            'finetuned_model_v2_output': ft_output_v2
         }
         
         results.append(result)
     
     # Save results to JSON
-    output_file = os.path.join(SCRIPT_DIR, "decompiler_comparison_results.json")
+    output_file = os.path.join(SCRIPT_DIR, "decompiler_comparison_results_v2.json")
     with open(output_file, 'w', encoding='utf-8') as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
     
