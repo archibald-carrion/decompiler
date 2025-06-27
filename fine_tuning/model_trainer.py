@@ -145,7 +145,7 @@ def create_trainer(
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
             data_collator=data_collator,
-            compute_metrics=BatchDecompilerMetrics(tokenizer.model_max_length) # Use custom evaluation-split metrics
+            compute_metrics=BatchDecompilerMetrics(len(tokenizer)) # Use custom evaluation-split metrics
         )
     except Exception as err:
         print(f"Unable to generate trainer: {err}", file=stderr)
