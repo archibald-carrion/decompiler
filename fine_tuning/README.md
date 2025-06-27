@@ -8,13 +8,13 @@ This module provides a flexible, production-oriented system for fine-tuning larg
 ## System Architecture
 
 ```mermaid
-flowchart TD
-    A[Data Preparation] --> B[Dataset Mapping (CSV)]
-    B --> C[Dataset Loader]
-    C --> D[Model Loader]
-    D --> E[Trainer]
-    E --> F[Evaluation & Metrics]
-    F --> G[Results/Plots]
+flowchart TD;
+    A[Data Preparation] --> B["Dataset Mapping (CSV)"];
+    B --> C["Dataset Loader"];
+    C --> D["Model Loader"];
+    D --> E["Trainer"];
+    E --> F["Evaluation & Metrics"];
+    F --> G["Results/Plots"];
 ```
 
 **Key Components:**
@@ -35,11 +35,15 @@ flowchart TD
 
 ## Usage
 
+Install required dependencies. For further information run on a directory directly above this repo's:
+```sh
+python -m decompiler.fine_tuning -h
+```
 
 ## Troubleshooting
 - **Out of Memory:** Increase Docker/container memory limit.
 - **No Data Found:** Ensure your data is in the correct folders and mappings.csv is present.
-- **Slow Training:** Use GPU if available; reduce batch size if needed.
+- **Slow Training:** Use GPU if available; increase effective batch size via gradient accumulation steps if needed.
 
 ## Dependencies
 All required Python dependencies are installed automatically from `requirements.txt` during Docker build or can be installed manually:
