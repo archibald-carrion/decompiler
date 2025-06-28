@@ -1,8 +1,0 @@
-Pattern 1: ('gcc-64-0', 'gcc-64-3', 'gcc-64-s', 'gcc-64-0', 'gcc-64-3', 'gcc-64-s') (Count: 35388)
-Pattern 2: ('gcc-64-0', 'gcc-64-3', 'gcc-64-s', 'gcc-64-0', 'gcc-64-3', 'gcc-64-s', 'gcc-64-0', 'gcc-64-3', 'gcc-64-s', 'gcc-64-0', 'gcc-64-3', 'gcc-64-s') (Count: 6340)
-Pattern 3: () (Count: 550)
-Pattern 4: ('gcc-64-0', 'gcc-64-3', 'gcc-64-s') (Count: 272)
-Pattern 5: ('gcc-64-0', 'gcc-64-3', 'gcc-64-s', 'gcc-64-0', 'gcc-64-3', 'gcc-64-s', 'gcc-64-0', 'gcc-64-3', 'gcc-64-s') (Count: 111)
-Pattern 6: ('gcc-64-3', 'gcc-64-s', 'gcc-64-0', 'gcc-64-3', 'gcc-64-s') (Count: 91)
-Pattern 7: ('gcc-64-0', 'gcc-64-0') (Count: 13)
-Pattern 8: ('gcc-64-0', 'gcc-64-3', 'gcc-64-s', 'gcc-64-0', 'gcc-64-3', 'gcc-64-s', 'gcc-64-0', 'gcc-64-0') (Count: 4)
