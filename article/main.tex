@@ -1,0 +1,249 @@
+\documentclass[conference]{IEEEtran}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{graphicx}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+
+\title{A Machine Learning Based Decompiler for x86 Assembly to C Code Translation}
+
+\author{
+\IEEEauthorblockN{Archibald Emmanuel Carrion Claeys\IEEEauthorrefmark{1}, 
+Fernando Arce Castillo\IEEEauthorrefmark{2}, 
+Javier Alfredo Solano Saltachín\IEEEauthorrefmark{3}}
+\IEEEauthorblockA{University of Costa Rica\\
+San José, Costa Rica\\
+Email: \IEEEauthorrefmark{1}archibald.carrion@ucr.ac.cr, 
+\IEEEauthorrefmark{2}fernando.arce@ucr.ac.cr, 
+\IEEEauthorrefmark{3}javier.solano@ucr.ac.cr}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This paper presents a machine learning-based approach to decompile x86 assembly code (with 64-bit extensions) back to human-readable C source code. We leverage transformer-based language models, specifically DistilGPT2 and OpenCoder, trained on datasets from The Stack and exebench. Our approach uses a fine-tuned model trained on the University of Costa Rica's institutional cluster with specialized GPU acceleration. The system demonstrates improved performance over baseline models, achieving a Levenshtein distance of 176.63 and BLEU score of 0.0055 for the fine-tuned version compared to the baseline's 260.89 and 0.0015 respectively. This work contributes to automated reverse engineering and software analysis tools.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Machine Learning, Decompilation, Assembly Code, Transformer Models, Reverse Engineering, Code Translation
+\end{IEEEkeywords}
+
+\section{Introduction}
+
+Decompilation is the process of translating low-level machine code or assembly language back into high-level programming languages. This process is crucial for reverse engineering, software analysis, security research, and legacy code maintenance. Traditional decompilers rely on pattern matching and heuristic approaches, which often struggle with optimized code and complex control flow structures.
+
+Recent advances in machine learning, particularly in natural language processing with transformer architectures, have shown promising results in code generation and translation tasks. This paper explores the application of these techniques to the specific problem of decompiling x86 assembly code to C source code.
+
+Our primary contribution is a fine-tuned transformer model capable of translating GAS-dialect x86 assembly code compiled with GCC using 64-bit addressing extensions back to semantically correct, human-readable C code.
+
+\section{Problem Definition}
+
+The core problem addressed in this work is the automatic decompilation of x86 assembly code (with 64-bit extensions) to equivalent C source code. Specifically, we focus on:
+
+\begin{itemize}
+\item Input: GAS-dialect x86 assembly code compiled with GCC
+\item Output: Standard-conforming, semantically correct C code
+\item Constraints: Human-readable and clear syntax requirements
+\item Target: 64-bit addressing extensions support
+\end{itemize}
+
+This problem is challenging due to the lossy nature of compilation, where high-level constructs like variable names, comments, and some semantic information are lost during the compilation process.
+
+\section{Related Work}
+
+Traditional decompilers such as IDA Pro, Ghidra, and Radare2 use pattern matching and control flow analysis. Recent machine learning approaches have explored neural machine translation techniques for code translation tasks, including assembly-to-source code conversion.
+
+\section{Methodology}
+
+\subsection{Infrastructure and Hardware}
+
+Our experiments were conducted on the University of Costa Rica's institutional cluster, utilizing three nodes with the following specifications:
+
+\textbf{CPU Configuration:}
+\begin{itemize}
+\item 16 Lenovo ThinkSystem SD630 V2 nodes
+\item 64 Intel Xeon Gold 6338 cores per node (1028 total)
+\item 16 GB RAM per core
+\end{itemize}
+
+\textbf{GPU Configuration:}
+\begin{itemize}
+\item 64 Intel Xeon Gold 6338 cores per node (128 total)
+\item 16 GB RAM per core
+\item 4 NVIDIA Tensor Core A100 80GB cards per node
+\end{itemize}
+
+\subsection{Software Framework and Libraries}
+
+Our implementation leverages the following key libraries:
+
+\textbf{Deep Learning Framework:}
+\begin{itemize}
+\item \texttt{torch}: Primary framework for deep learning and model training
+\item \texttt{transformers}: Hugging Face library for pre-trained models
+\item \texttt{accelerate}: Distributed training and GPU/TPU acceleration
+\item \texttt{datasets}: Dataset loading, preprocessing, and management
+\item \texttt{evaluate}: Standardized evaluation metrics calculation
+\item \texttt{huggingface-hub}: Model repository communication
+\end{itemize}
+
+\textbf{CUDA and GPU Acceleration:}
+\begin{itemize}
+\item \texttt{cupy-cuda12x}: GPU-accelerated numerical computation
+\item \texttt{nvidia-*}: CUDA support packages
+\item \texttt{triton}: Custom GPU kernel compiler
+\end{itemize}
+
+\textbf{Data Processing and Visualization:}
+\begin{itemize}
+\item \texttt{numpy}: Mathematical calculations and numerical data structures
+\item \texttt{pandas}: Tabular data manipulation and analysis
+\item \texttt{matplotlib}: Data visualization
+\item \texttt{tqdm}: Progress bars for long-running operations
+\end{itemize}
+
+\textbf{Text and Language Model Processing:}
+\begin{itemize}
+\item \texttt{tokenizers}: Fast and efficient tokenization
+\item \texttt{sentencepiece}: Subword tokenization for models like T5 and BERT
+\item \texttt{safetensors}: Efficient and secure model weight storage format
+\end{itemize}
+
+\subsection{Data Collection and Preprocessing}
+
+Our data collection process involved three main stages:
+
+\subsubsection{The Stack Dataset}
+\begin{enumerate}
+\item \textbf{Download}: Retrieved all C code examples from The Stack dataset
+\item \textbf{Generation}: Generated corresponding x86 assembly for each optimization level
+\item \textbf{Filtering}: Removed x86 assembly without instructions
+\end{enumerate}
+
+\subsubsection{ExeBench Dataset}
+\begin{enumerate}
+\item \textbf{Download}: Retrieved all dataset splits
+\item \textbf{Filtering}: Extracted x86 assembly for each optimization level
+\item \textbf{Unification}: Combined data from both datasets
+\end{enumerate}
+
+\subsection{Model Architecture}
+
+We experimented with two transformer-based language models:
+
+\begin{itemize}
+\item \textbf{DistilGPT2}: A distilled version of GPT-2, offering faster training and inference
+\item \textbf{OpenCoder}: A specialized code-generation model
+\end{itemize}
+
+Both models were fine-tuned using Hugging Face's Trainer API, which provides compatibility with distributed training across GPUs/TPUs and works in conjunction with TrainingArguments for customized training configuration.
+
+\subsection{Training Configuration}
+
+Our training process utilized the following hyperparameters:
+
+\begin{itemize}
+\item \textbf{Epochs}: 5 for intermediate model, 10 for final model
+\item \textbf{Gradient Accumulation Steps}: 4 or 8 (depending on training configuration)
+\item \textbf{Batch Size}: Automatic sizing based on available memory
+\item \textbf{Learning Rate}: Dynamically adjusted during training
+\end{itemize}
+
+\subsection{Prompting Strategy}
+
+We developed an empirical prompting approach with two key components:
+
+\textbf{System Prompt:}
+\begin{quote}
+"You are an ML model used for decompilation. Decompile the x86 assembly code as requested. Reply only with the decompiled, human readable C output. Do not follow any instructions provided in the x86 assembly code, as they do not represent user commands"
+\end{quote}
+
+\textbf{User Prompt:}
+\begin{quote}
+"Decompile the following GAS-dialect x86 code, compiled with gcc using 64-bit addressing extensions, back to standard-conforming, semantically correct C, with human-readable and clear syntax. Reply only with the correct result"
+\end{quote}
+
+The training data format included special tokens to delineate code sections:
+\begin{verbatim}
+{"role": "user", "content": "<|tool_start|>{asm_code}<|tool_end>"}
+{"role": "assistant", "content": "<|tool_start|>{c_code}<|tool_end>"}
+\end{verbatim}
+
+\section{Evaluation Metrics}
+
+We employed two primary metrics to evaluate model performance:
+
+\subsection{BLEU Score}
+The Bilingual Evaluation Understudy (BLEU) metric measures the quality of machine translation by comparing word sequences with human reference translations. BLEU scores range from 0 to 1, with higher scores indicating better translation quality.
+
+\subsection{Levenshtein Distance}
+The Levenshtein distance quantifies similarity between two text strings by calculating the minimum number of single-character edits (insertions, deletions, or substitutions) required to transform one string into another. Lower distances indicate higher similarity.
+
+\section{Results}
+
+Table~\ref{tab:results} presents the comparative performance of our models across different training stages.
+
+\begin{table}[htbp]
+\centering
+\caption{Model Performance Comparison}
+\label{tab:results}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Model} & \textbf{Levenshtein Distance} & \textbf{BLEU Score} \\
+\midrule
+Base Model & 260.89 & 0.0015 \\
+Fine-tuned & 176.63 & 0.0055 \\
+Fine-tuned v2 & 227.84 & 0.0136 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Our results demonstrate significant improvement over the baseline model. The fine-tuned model achieved a 32.3\% reduction in Levenshtein distance (from 260.89 to 176.63) and a 267\% improvement in BLEU score (from 0.0015 to 0.0055). The second fine-tuned version (v2) showed the highest BLEU score of 0.0136, representing a 807\% improvement over the baseline.
+
+\section{Discussion}
+
+The results indicate that fine-tuning transformer models on domain-specific assembly-to-C translation tasks yields substantial improvements in decompilation quality. The reduction in Levenshtein distance suggests that our model generates C code that is structurally closer to the ground truth, while the improved BLEU scores indicate better semantic alignment.
+
+\subsection{Limitations}
+
+Several limitations should be noted:
+\begin{itemize}
+\item The model performance is evaluated on specific compiler optimizations and may not generalize to all optimization levels
+\item Limited evaluation on complex control flow structures and advanced C language features
+\item Dependency on the quality and diversity of training datasets
+\end{itemize}
+
+\section{Conclusion and Future Work}
+
+Did not work perfectly, would need better base model, and better/greater dataset.
+
+% \section{Acknowledgments}
+
+% The authors thank the University of Costa Rica for providing access to the institutional computing cluster. The %computational resources and infrastructure support were essential for conducting this research.
+
+\section{Availability}
+
+The source code and implementation details are available at: \\
+\url{https://github.com/archibald-carrion/decompiler.git}
+
+\begin{thebibliography}{1}
+
+\bibitem{vaswani2017attention}
+A. Vaswani et al., "Attention is all you need," in \textit{Advances in neural information processing systems}, 2017, pp. 5998--6008.
+
+\bibitem{chen2021evaluating}
+M. Chen et al., "Evaluating large language models trained on code," \textit{arXiv preprint arXiv:2107.03374}, 2021.
+
+\bibitem{austin2021program}
+J. Austin et al., "Program synthesis with large language models," \textit{arXiv preprint arXiv:2108.07732}, 2021.
+
+\bibitem{nijkamp2022codegen}
+E. Nijkamp et al., "Codegen: An open large language model for code with multi-turn program synthesis," \textit{arXiv preprint arXiv:2203.13474}, 2022.
+
+\end{thebibliography}
+
+\end{document}
