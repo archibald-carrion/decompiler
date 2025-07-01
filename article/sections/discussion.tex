@@ -1,0 +1,16 @@
+\documentclass[../main.tex]{subfiles}
+\graphicspath{{\subfix{../images/}}}
+\begin{document}
+
+The results indicate that fine-tuning transformer models on domain-specific assembly-to-C translation tasks yields substantial improvements in decompilation quality. The reduction in Levenshtein distance suggests that our model generates C code that is structurally closer to the ground truth, while the improved BLEU scores indicate better semantic alignment.
+
+\subsection{Limitations}
+
+Several limitations should be noted:
+\begin{itemize}
+\item The model performance is evaluated on specific compiler optimizations and may not generalize to all optimization levels
+\item Limited evaluation on complex control flow structures and advanced C language features
+\item Dependency on the quality and diversity of training datasets
+\end{itemize}
+
+\end{document}

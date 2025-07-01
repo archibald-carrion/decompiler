@@ -1,0 +1,270 @@
+
+@inproceedings{cao_boosting_2022,
+	location = {Austin {TX} {USA}},
+	title = {Boosting Neural Networks to Decompile Optimized Binaries},
+	isbn = {978-1-4503-9759-9},
+	url = {https://dl.acm.org/doi/10.1145/3564625.3567998},
+	doi = {10.1145/3564625.3567998},
+	eventtitle = {{ACSAC}: Annual Computer Security Applications Conference},
+	pages = {508--518},
+	booktitle = {Proceedings of the 38th Annual Computer Security Applications Conference},
+	publisher = {{ACM}},
+	author = {Cao, Ying and Liang, Ruigang and Chen, Kai and Hu, Peiwei},
+	urldate = {2025-04-02},
+	date = {2022-12-05},
+	langid = {english},
+}
+
+@article{fu_n-bref_2020,
+	title = {N-Bref : A High-fidelity Decompiler Exploiting Programming Structures},
+	url = {https://openreview.net/forum?id=6GkL6qM3LV},
+	shorttitle = {N-Bref},
+	abstract = {Binary decompilation is a powerful technique for analyzing and understanding software, when source code is unavailable. It is a critical problem in the computer security domain. With the success of neural machine translation ({NMT}), recent efforts on neural-based decompiler show promising results compared to traditional approaches. However, several key challenges remain: (i) Prior neural-based decompilers focus on simplified programs without considering sophisticated yet widely-used data types such as pointers; furthermore, many high-level expressions map to the same low-level code (expression collision), which incurs critical decompiling performance degradation; (ii) State-of-the-art {NMT} models(e.g., transformer and its variants) mainly deal with sequential data; this is inefficient for decompilation, where the input and output data are highly structured. In this paper, we propose N-Bref, a new framework for neural decompilers that addresses the two aforementioned challenges with two key design principles: (i)N-Bref designs a structural transformer with three key design components for better comprehension of structural data – an assembly encoder, an abstract syntax tree encoder, and a tree decoder, extending transformer models in the context of decompilation. (ii) N-Bref introduces a program generation tool that can control the complexity of code generation and removes expression collisions. Extensive experiments demonstrate that N-Bref outperforms previous neural-based decompilers by a margin of 6.1\%/8.8\% accuracy in datatype recovery and source code generation. In particular, N-Bref decompiled human-written Leetcode programs with complex library calls and data types in high accuracy.},
+	author = {Fu, Cheng and Yang, Kunlin and Chen, Xinyun and Tian, Yuandong and Zhao, Jishen},
+	urldate = {2025-04-02},
+	date = {2020-10-02},
+	langid = {english},
+}
+
+@misc{katz_towards_2019,
+	title = {Towards Neural Decompilation},
+	rights = {{arXiv}.org perpetual, non-exclusive license},
+	url = {https://arxiv.org/abs/1905.08325},
+	doi = {10.48550/ARXIV.1905.08325},
+	abstract = {We address the problem of automatic decompilation, converting a program in low-level representation back to a higher-level human-readable programming language. The problem of decompilation is extremely important for security researchers. Finding vulnerabilities and understanding how malware operates is much easier when done over source code. The importance of decompilation has motivated the construction of hand-crafted rule-based decompilers. Such decompilers have been designed by experts to detect specific control-flow structures and idioms in low-level code and lift them to source level. The cost of supporting additional languages or new language features in these models is very high. We present a novel approach to decompilation based on neural machine translation. The main idea is to automatically learn a decompiler from a given compiler. Given a compiler from a source language S to a target language T , our approach automatically trains a decompiler that can translate (decompile) T back to S . We used our framework to decompile both {LLVM} {IR} and x86 assembly to C code with high success rates. Using our {LLVM} and x86 instantiations, we were able to successfully decompile over 97\% and 88\% of our benchmarks respectively.},
+	publisher = {{arXiv}},
+	author = {Katz, Omer and Olshaker, Yuval and Goldberg, Yoav and Yahav, Eran},
+	urldate = {2025-04-02},
+	date = {2019},
+	keywords = {{FOS}: Computer and information sciences, Machine Learning (cs.{LG}), Programming Languages (cs.{PL})},
+}
+
+@misc{escalada_improving_2021,
+	title = {Improving type information inferred by decompilers with supervised machine learning},
+	url = {http://arxiv.org/abs/2101.08116},
+	doi = {10.48550/arXiv.2101.08116},
+	abstract = {In software reverse engineering, decompilation is the process of recovering source code from binary files. Decompilers are used when it is necessary to understand or analyze software for which the source code is not available. Although existing decompilers commonly obtain source code with the same behavior as the binaries, that source code is usually hard to interpret and certainly differs from the original code written by the programmer. Massive codebases could be used to build supervised machine learning models aimed at improving existing decompilers. In this article, we build different classification models capable of inferring the high-level type returned by functions, with significantly higher accuracy than existing decompilers. We automatically instrument C source code to allow the association of binary patterns with their corresponding high-level constructs. A dataset is created with a collection of real open-source applications plus a huge number of synthetic programs. Our system is able to predict function return types with a 79.1\% F1-measure, whereas the best decompiler obtains a 30\% F1-measure. Moreover, we document the binary patterns used by our classifier to allow their addition in the implementation of existing decompilers.},
+	number = {{arXiv}:2101.08116},
+	publisher = {{arXiv}},
+	author = {Escalada, Javier and Scully, Ted and Ortin, Francisco},
+	urldate = {2025-04-02},
+	date = {2021-02-24},
+	eprinttype = {arxiv},
+	eprint = {2101.08116},
+	keywords = {Computer Science - Machine Learning, Computer Science - Programming Languages, Computer Science - Software Engineering},
+}
+
+@misc{liang_semantics-recovering_2021,
+	title = {Semantics-Recovering Decompilation through Neural Machine Translation},
+	rights = {Creative Commons Attribution 4.0 International},
+	url = {https://arxiv.org/abs/2112.15491},
+	doi = {10.48550/ARXIV.2112.15491},
+	abstract = {Decompilation transforms low-level program languages ({PL}) (e.g., binary code) into high-level {PLs} (e.g., C/C++). It has been widely used when analysts perform security analysis on software (systems) whose source code is unavailable, such as vulnerability search and malware analysis. However, current decompilation tools usually need lots of experts' efforts, even for years, to generate the rules for decompilation, which also requires long-term maintenance as the syntax of high-level {PL} or low-level {PL} changes. Also, an ideal decompiler should concisely generate high-level {PL} with similar functionality to the source low-level {PL} and semantic information (e.g., meaningful variable names), just like human-written code. Unfortunately, existing manually-defined rule-based decompilation techniques only functionally restore the low-level {PL} to a similar high-level {PL} and are still powerless to recover semantic information. In this paper, we propose a novel neural decompilation approach to translate low-level {PL} into accurate and user-friendly high-level {PL}, effectively improving its readability and understandability. Furthermore, we implement the proposed approaches called {SEAM}. Evaluations on four real-world applications show that {SEAM} has an average accuracy of 94.41\%, which is much better than prior neural machine translation ({NMT}) models. Finally, we evaluate the effectiveness of semantic information recovery through a questionnaire survey, and the average accuracy is 92.64\%, which is comparable or superior to the state-of-the-art compilers.},
+	publisher = {{arXiv}},
+	author = {Liang, Ruigang and Cao, Ying and Hu, Peiwei and He, Jinwen and Chen, Kai},
+	urldate = {2025-04-02},
+	date = {2021},
+	keywords = {{FOS}: Computer and information sciences, Programming Languages (cs.{PL}), Cryptography and Security (cs.{CR}), Software Engineering (cs.{SE})},
+}
+
+@inproceedings{katz_using_2018,
+	location = {Campobasso},
+	title = {Using recurrent neural networks for decompilation},
+	isbn = {978-1-5386-4969-5},
+	url = {http://ieeexplore.ieee.org/document/8330222/},
+	doi = {10.1109/SANER.2018.8330222},
+	eventtitle = {2018 {IEEE} 25th International Conference on Software Analysis, Evolution and Reengineering ({SANER})},
+	pages = {346--356},
+	booktitle = {2018 {IEEE} 25th International Conference on Software Analysis, Evolution and Reengineering ({SANER})},
+	publisher = {{IEEE}},
+	author = {Katz, Deborah S. and Ruchti, Jason and Schulte, Eric},
+	urldate = {2025-04-02},
+	date = {2018-03},
+}
+
+@inproceedings{hosseini_beyond_2022,
+	location = {San Diego, {CA}, {USA}},
+	title = {Beyond the C: Retargetable Decompilation using Neural Machine Translation},
+	isbn = {978-1-891562-76-1},
+	url = {https://www.ndss-symposium.org/wp-content/uploads/bar2022_23009_paper.pdf},
+	doi = {10.14722/bar.2022.23009},
+	shorttitle = {Beyond the C},
+	eventtitle = {Workshop on Binary Analysis Research},
+	booktitle = {Proceedings 2022 Workshop on Binary Analysis Research},
+	publisher = {Internet Society},
+	author = {Hosseini, Iman and Dolan-Gavitt, Brendan},
+	urldate = {2025-04-02},
+	date = {2022},
+	langid = {english},
+}
+
+@thesis{vaaden_using_2024,
+	title = {Using Large Language Models for Binary Decompilation},
+	url = {https://ntnuopen.ntnu.no/ntnu-xmlui/handle/11250/3168005},
+	abstract = {Denne oppgaven undersøker Store Språkmodellers evne til å dekompilere binære objekt-filer. Sagt med andre ord, vi måler deres evne til a rekonstruere den originale C kildekoden som produserte en binærfil. Noen språkmodeller har evnet å utføre oppgaver de aldri har blitt trent opp til, og oppgaveforfatteren har observert at de kan forstå og forklare lesbar assembly-kode. En hypotese om at språkmodeller også kan utføre dekompilering ble utformet basert på disse observasjonene.
+
+Et modulært system ble bygget i Python for å teste denne hypotesen. Systemet følger en prosess hvor C kildekode kompileres til binærfiler som tas ifra hverandre til en "disassembly" fil. Disse blir videre lest og dekompilert av ulike "prediktorer" som inkluderer både språkmodeller og en tradisjonell regelbasert dekompilator. Til slutt ble prestasjonene til prediktorene målt med en evalueringsalgoritme kalt {CodeBLEU}. Det modulære systemet lar oss enkelt bytte ut og konfigurere kompilatorer, "disassemblere," prediktorer og evalueringsalgoritmer. En rekke eksperimenter ble gjort for å undersøke hva slags faktorer som påvirker prediktorenes evne. Det modulære systemet legger også til rette for en rekke potensielle framtidige forskningsprosjekter.
+
+Resultatene viser en lovende dekompilerings-evne hos språkmodeller, men det diskuteres også hvorvidt {CodeBLEU} er det rette verktøyet for å måle denne evnen sammenlignet med andre metoder. Det blir gjort en sammenligning med et annet verktøy kalt Dekompile-eval, og muligheten for en manuell evaluerigs-prosess, med fokus på kode-korrekthet og lesbarhet.},
+	institution = {{NTNU}},
+	type = {Master thesis},
+	author = {Vaaden, Martin Holst},
+	urldate = {2025-04-02},
+	date = {2024},
+}
+
+@inproceedings{liu_how_2020,
+	location = {Virtual Event {USA}},
+	title = {How far we have come: testing decompilation correctness of C decompilers},
+	isbn = {978-1-4503-8008-9},
+	url = {https://dl.acm.org/doi/10.1145/3395363.3397370},
+	doi = {10.1145/3395363.3397370},
+	shorttitle = {How far we have come},
+	eventtitle = {{ISSTA} '20: 29th {ACM} {SIGSOFT} International Symposium on Software Testing and Analysis},
+	pages = {475--487},
+	booktitle = {Proceedings of the 29th {ACM} {SIGSOFT} International Symposium on Software Testing and Analysis},
+	publisher = {{ACM}},
+	author = {Liu, Zhibo and Wang, Shuai},
+	urldate = {2025-04-02},
+	date = {2020-07-18},
+	langid = {english},
+}
+
+@inproceedings{armengol-estape_exebench_2022,
+	location = {San Diego {CA} {USA}},
+	title = {{ExeBench}: an {ML}-scale dataset of executable C functions},
+	isbn = {978-1-4503-9273-0},
+	url = {https://dl.acm.org/doi/10.1145/3520312.3534867},
+	doi = {10.1145/3520312.3534867},
+	shorttitle = {{ExeBench}},
+	eventtitle = {{MAPS} '22: 6th {ACM} {SIGPLAN} International Symposium on Machine Programming},
+	pages = {50--59},
+	booktitle = {Proceedings of the 6th {ACM} {SIGPLAN} International Symposium on Machine Programming},
+	publisher = {{ACM}},
+	author = {Armengol-Estapé, Jordi and Woodruff, Jackson and Brauckmann, Alexander and Magalhães, José Wesley De Souza and O'Boyle, Michael F. P.},
+	urldate = {2025-04-12},
+	date = {2022-06-13},
+	langid = {english},
+}
+
+@inproceedings{brumley_native_2013,
+	title = {Native x86 Decompilation Using Semantics-Preserving Structural Analysis and Iterative Control-Flow Structuring},
+	isbn = {978-1-931971-03-4},
+	url = {https://www.usenix.org/conference/usenixsecurity13/technical-sessions/presentation/schwartz},
+	eventtitle = {22nd {USENIX} Security Symposium ({USENIX} Security 13)},
+	pages = {353--368},
+	author = {Brumley, David and Lee, {JongHyup} and Schwartz, Edward J. and Woo, Maverick},
+	urldate = {2025-04-11},
+	date = {2013},
+	langid = {english},
+}
+
+@thesis{cifuentes_reverse_1994,
+	title = {Reverse Compilation Techniques},
+	url = {https://rgaucher.info/pub/decompilation_thesis.pdf},
+	pagetotal = {56},
+	institution = {Queensland University of Technology},
+	type = {phdthesis},
+	author = {Cifuentes, Cristina},
+	date = {1994-07},
+}
+
+@article{le_compiler_2014,
+	title = {Compiler validation via equivalence modulo inputs},
+	volume = {49},
+	issn = {0362-1340, 1558-1160},
+	url = {https://dl.acm.org/doi/10.1145/2666356.2594334},
+	doi = {10.1145/2666356.2594334},
+	abstract = {We introduce 
+              equivalence modulo inputs ({EMI}) 
+              , a simple, widely applicable methodology for validating optimizing compilers. Our key insight is to exploit the close interplay between (1) dynamically executing a program on some test inputs and (2) statically compiling the program to work on all possible inputs. Indeed, the test inputs induce a natural collection of the original program's {EMI} variants, which can help differentially test any compiler and specifically target the difficult-to-find miscompilations. 
+             
+            To create a practical implementation of {EMI} for validating C compilers, we profile a program's test executions and stochastically prune its unexecuted code. Our extensive testing in eleven months has led to 147 confirmed, unique bug reports for {GCC} and {LLVM} alone. The majority of those bugs are miscompilations, and more than 100 have already been fixed. 
+            Beyond testing compilers, {EMI} can be adapted to validate program transformation and analysis systems in general. This work opens up this exciting, new direction.},
+	pages = {216--226},
+	number = {6},
+	journaltitle = {{ACM} {SIGPLAN} Notices},
+	shortjournal = {{SIGPLAN} Not.},
+	author = {Le, Vu and Afshari, Mehrdad and Su, Zhendong},
+	urldate = {2025-04-11},
+	date = {2014-06-05},
+	langid = {english},
+}
+
+@thesis{van_emmerik_static_2007,
+	title = {Static Single Assignment for Decompilation},
+	url = {http://www.backerstreet.com/decompiler/vanEmmerik_ssa.pdf},
+	abstract = {Static Single Assignment enables the eficient implementation of many important decompiler components, including expression propagation, preservation analysis, type analysis, and the analysis of indirect jumps and calls. Source code is an essential part of all software development. It is so valuable that when it is not available, it can be worthwhile deriving it from the executable form of computer programs through the process of decompilation. There are many applications for decompiled source code, including inspections for malware, bugs, and vulnerabilities; interoperability; and the maintenance of an application that has some or all source code missing. Existing machine code decompilers, in contrast to existing decompilers for Java and similar platforms, have significant deficiencies. These include poor recovery of parameters and returns, poor handling of indirect jumps and calls, and poor to nonexistent type analysis. It is shown that use of the Static Single Assignment form ({SSA} form) enables many of these deficiencies to be overcome. {SSA} enables or assists with
+• data fow analysis, particularly expression propagation;
+• the identification of parameters and returns, without assuming {ABI} compliance;
+• preservation analysis (whether a location is preserved across a call), which is needed for analysing parameters and return locations;
+• type analysis, implemented as a sparse data flow problem; and
+• the analysis of indirect jumps and calls.
+Expression propagation is a key element of a decompiler, since it allows long sequences of individual instruction semantics to be combined into more complex, high level statements. Parameters, returns, and types are features of high level languages that do not appear explicitly in machine code programs, hence their recovery is important for readability and the ability to recompile the generated code. In addition, type analysis is either absent from existing machine code decompilers, or is limited to a relatively simple propagation of types from library function calls. The analysis of indirect jumps and calls is important for finding all code in a machine code program, and enables the translation of important high level program elements such as switch statements, assigned gotos, virtual function calls, and calls through function pointers.
+Because of these challenges, machine code decompilers are the most interesting case. Existing machine code decompilers are weak at identifying parameters and returns, particularly where parameters are passed in registers, or the calling convention is non standard. A general analysis of parameters and returns is demonstrated, using new devices such as Collectors. These analyses become more complex in the presence of recursion. The elimination of redundant parameters and returns are shown to be global analyses, implying that for a general decompiler, procedures can not be initianalised until all other procedures are analysed. Full type analysis is discussed, where the semantics of individual instructions, as well as information from library calls, contribute to the solution. A sparse, iterative, data flow based approach is compared with the more common constraint based approach. The former requires special functions to handle the multiple constraints that result from overloaded operators such as addition and subtraction. Special problems arise with aggregate types (arrays and structures), and address taking of variables.
+Indirect branch instructions are often handled at instruction decode time. Delaying analysis until the program is represented in {SSA} form allows more powerful techniques such as expression propagation to be used. This results in a simpler, more general analysis, at the cost of having to throw away some results and restart some analyses. It is shown that this technique easily extends to handling Fortran assigned gotos, which can not be effectively analysed at decode time. The analysis of indirect call instructions has the potential for enabling the recovery of object oriented virtual function calls. Many of the techniques presented in this thesis have been verified with the Boomerang open source decompiler. The goal of extending the state of the art of machine code decompilation has been achieved. There are of course still some areas left for future work. The most promising areas for future research have been identified as range analysis and alias analysis.},
+	pagetotal = {334},
+	institution = {University of Queensland},
+	type = {phdthesis},
+	author = {Van Emmerik, Michael James},
+	date = {2007},
+}
+
+@article{eom_r2i_2024,
+	title = {R2I: A Relative Readability Metric for Decompiled Code},
+	volume = {1},
+	issn = {2994-970X},
+	url = {https://dl.acm.org/doi/10.1145/3643744},
+	doi = {10.1145/3643744},
+	shorttitle = {R2I},
+	abstract = {Decompilation is a process of converting a low-level machine code snippet back into a high-level programming language such as C. It serves as a basis to aid reverse engineers in comprehending the contextual semantics of the code. In this respect, commercial decompilers like Hex-Rays have made significant strides in improving the readability of decompiled code over time. While previous work has proposed the metrics for assessing the readability of source code, including identifiers, variable names, function names, and comments, those metrics are unsuitable for measuring the readability of decompiled code primarily due to i) the lack of rich semantic information in the source and ii) the presence of erroneous syntax or inappropriate expressions. In response, to the best of our knowledge, this work first introduces R2I, the Relative Readability Index, a specialized metric tailored to evaluate decompiled code in a relative context quantitatively. In essence, R2I can be computed by i) taking code snippets across different decompilers as input and ii) extracting pre-defined features from an abstract syntax tree. For the robustness of R2I, we thoroughly investigate the enhancement efforts made by (non-)commercial decompilers and academic research to promote code readability, identifying 31 features to yield a reliable index collectively. Besides, we conducted a user survey to capture subjective factors such as one’s coding styles and preferences. Our empirical experiments demonstrate that R2I is a versatile metric capable of representing the relative quality of decompiled code (e.g., obfuscation, decompiler updates) and being well aligned with human perception in our survey.},
+	pages = {383--405},
+	issue = {{FSE}},
+	journaltitle = {Proceedings of the {ACM} on Software Engineering},
+	shortjournal = {Proc. {ACM} Softw. Eng.},
+	author = {Eom, Haeun and Kim, Dohee and Lim, Sori and Koo, Hyungjoon and Hwang, Sungjae},
+	urldate = {2025-04-11},
+	date = {2024-07-12},
+	langid = {english},
+}
+
+@misc{taylor_forecasting_2017,
+	title = {Forecasting at scale},
+	rights = {http://creativecommons.org/licenses/by/4.0/},
+	url = {https://peerj.com/preprints/3190v2},
+	doi = {10.7287/peerj.preprints.3190v2},
+	abstract = {Forecasting is a common data science task that helps organizations with capacity planning, goal setting, and anomaly detection. Despite its importance, there are serious challenges associated with producing reliable and high quality forecasts — especially when there are a variety of time series and analysts with expertise in time series modeling are relatively rare. To address these challenges, we describe a practical approach to forecasting “at scale” that combines configurable models with analyst-in-the-loop performance analysis. We propose a modular regression model with interpretable parameters that can be intuitively adjusted by analysts with domain knowledge about the time series. We describe performance analyses to compare and evaluate forecasting procedures, and automatically flag forecasts for manual review and adjustment. Tools that help analysts to use their expertise most effectively enable reliable, practical forecasting of business time series.},
+	author = {Taylor, Sean J and Letham, Benjamin},
+	urldate = {2025-04-11},
+	date = {2017-09-27},
+	langid = {english},
+}
+
+@inproceedings{durfina_design_2011,
+	location = {Berlin, Heidelberg},
+	title = {Design of a Retargetable Decompiler for a Static Platform-Independent Malware Analysis},
+	isbn = {978-3-642-23141-4},
+	doi = {10.1007/978-3-642-23141-4_8},
+	abstract = {Together with the massive expansion of smartphones, tablets, and other smart devices, we can notice a growing number of malware threats targeting these platforms. Software security companies are not prepared for such diversity of target platforms and there are only few techniques for platform-independent malware analysis. This is a major security issue these days. In this paper, we propose a concept of a retargetable reverse compiler (i.e. a decompiler), which is in an early stage of development. The retargetable decompiler transforms platform-specific binary applications into a high-level language ({HLL}) representation, which can be further analyzed in a uniform way. This tool will help with a static platform-independent malware analysis. Our unique solution is based on an exploitation of two systems that were originally not intended for such an application—the architecture description language ({ADL}) {ISAC} for a platform description and the {LLVM} Compiler System as the core of the decompiler. In this study, we show that our tool can produce highly readable {HLL} code.},
+	pages = {72--86},
+	booktitle = {Information Security and Assurance},
+	publisher = {Springer},
+	author = {Ďurfina, Lukáš and Křoustek, Jakub and Zemek, Petr and Kolář, Dušan and Hruška, Tomáš and Masařík, Karel and Meduna, Alexander},
+	editor = {Kim, Tai-hoon and Adeli, Hojjat and Robles, Rosslin John and Balitanas, Maricel},
+	date = {2011},
+	langid = {english},
+}
+
+@misc{kocetkov_stack_2022,
+	title = {The Stack: 3 {TB} of permissively licensed source code},
+	rights = {Creative Commons Attribution Share Alike 4.0 International},
+	url = {https://arxiv.org/abs/2211.15533},
+	doi = {10.48550/ARXIV.2211.15533},
+	shorttitle = {The Stack},
+	abstract = {Large Language Models ({LLMs}) play an ever-increasing role in the field of Artificial Intelligence ({AI})--not only for natural language processing but also for code understanding and generation. To stimulate open and responsible research on {LLMs} for code, we introduce The Stack, a 3.1 {TB} dataset consisting of permissively licensed source code in 30 programming languages. We describe how we collect the full dataset, construct a permissively licensed subset, present a data governance plan, discuss limitations, and show promising results on text2code benchmarks by training 350M-parameter decoders on different Python subsets. We find that (1) near-deduplicating the data significantly boosts performance across all experiments, and (2) it is possible to match previously reported {HumanEval} and {MBPP} performance using only permissively licensed data. We make the dataset available at https://hf.co/{BigCode}, provide a tool called "Am I in The Stack" (https://hf.co/spaces/bigcode/in-the-stack) for developers to search The Stack for copies of their code, and provide a process for code to be removed from the dataset by following the instructions at https://www.bigcode-project.org/docs/about/the-stack/.},
+	publisher = {{arXiv}},
+	author = {Kocetkov, Denis and Li, Raymond and Allal, Loubna Ben and Li, Jia and Mou, Chenghao and Ferrandis, Carlos Muñoz and Jernite, Yacine and Mitchell, Margaret and Hughes, Sean and Wolf, Thomas and Bahdanau, Dzmitry and von Werra, Leandro and de Vries, Harm},
+	urldate = {2025-04-03},
+	date = {2022},
+	keywords = {{FOS}: Computer and information sciences, Artificial Intelligence (cs.{AI}), Computation and Language (cs.{CL})},
+}

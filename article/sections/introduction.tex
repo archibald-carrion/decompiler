@@ -1,0 +1,28 @@
+\documentclass[../main.tex]{subfiles}
+\graphicspath{{\subfix{../images/}}}
+\begin{document}
+
+Decompilation is the process of translating low-level machine code or assembly language back into high-level programming languages. This process is crucial for reverse engineering, software analysis, security research, and legacy code maintenance. Traditional decompilers rely on pattern matching and heuristic approaches, which often struggle with optimized code and complex control flow structures.
+
+Recent advances in machine learning, particularly in natural language processing with transformer architectures, have shown promising results in code generation and translation tasks. This paper explores the application of these techniques to the specific problem of decompiling x86 assembly code to C source code.
+
+Our primary contribution is a fine-tuned transformer model capable of translating GAS-dialect x86 assembly code compiled with GCC using 64-bit addressing extensions back to semantically correct, human-readable C code.
+
+\subsection{Problem Definition}
+
+The core problem addressed in this work is the automatic decompilation of x86 assembly code (with 64-bit extensions) to equivalent C source code. Specifically, we focus on:
+
+\begin{itemize}
+\item Input: GAS-dialect x86 assembly code compiled with GCC
+\item Output: Standard-conforming, semantically correct C code
+\item Constraints: Human-readable and clear syntax requirements
+\item Target: 64-bit addressing extensions support
+\end{itemize}
+
+This problem is challenging due to the lossy nature of compilation, where high-level constructs like variable names, comments, and some semantic information are lost during the compilation process.
+
+\subsection{Related Work}
+
+Traditional decompilers such as IDA Pro, Ghidra, and Radare2 use pattern matching and control flow analysis. Recent machine learning approaches have explored neural machine translation techniques for code translation tasks, including assembly-to-source code conversion.
+
+\end{document}

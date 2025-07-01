@@ -1,0 +1,129 @@
+\documentclass[../main.tex]{subfiles}
+\graphicspath{{\subfix{../images/}}}
+\begin{document}
+
+\subsection{Infrastructure and Hardware}
+
+Our experiments were conducted on the University of Costa Rica's institutional cluster, utilizing three nodes with the following specifications:
+
+\textbf{CPU Configuration:}
+\begin{itemize}
+\item 16 Lenovo ThinkSystem SD630 V2 nodes
+\item 64 Intel Xeon Gold 6338 cores per node (1028 total)
+\item 16 GB RAM per core
+\end{itemize}
+
+\textbf{GPU Configuration:}
+\begin{itemize}
+\item 64 Intel Xeon Gold 6338 cores per node (128 total)
+\item 16 GB RAM per core
+\item 4 NVIDIA Tensor Core A100 80GB cards per node
+\end{itemize}
+
+\subsection{Software Framework and Libraries}
+
+Our implementation leverages the following key libraries:
+
+\textbf{Deep Learning Framework:}
+\begin{itemize}
+\item \texttt{torch}: Primary framework for deep learning and model training
+\item \texttt{transformers}: Hugging Face library for pre-trained models
+\item \texttt{accelerate}: Distributed training and GPU/TPU acceleration
+\item \texttt{datasets}: Dataset loading, preprocessing, and management
+\item \texttt{evaluate}: Standardized evaluation metrics calculation
+\item \texttt{huggingface-hub}: Model repository communication
+\end{itemize}
+
+\textbf{CUDA and GPU Acceleration:}
+\begin{itemize}
+\item \texttt{cupy-cuda12x}: GPU-accelerated numerical computation
+\item \texttt{nvidia-*}: CUDA support packages
+\item \texttt{triton}: Custom GPU kernel compiler
+\end{itemize}
+
+\textbf{Data Processing and Visualization:}
+\begin{itemize}
+\item \texttt{numpy}: Mathematical calculations and numerical data structures
+\item \texttt{pandas}: Tabular data manipulation and analysis
+\item \texttt{matplotlib}: Data visualization
+\item \texttt{tqdm}: Progress bars for long-running operations
+\end{itemize}
+
+\textbf{Text and Language Model Processing:}
+\begin{itemize}
+\item \texttt{tokenizers}: Fast and efficient tokenization
+\item \texttt{sentencepiece}: Subword tokenization for models like T5 and BERT
+\item \texttt{safetensors}: Efficient and secure model weight storage format
+\end{itemize}
+
+\subsection{Data Collection and Preprocessing}
+
+Our data collection process involved three main stages:
+
+\subsubsection{The Stack Dataset}
+\begin{enumerate}
+\item \textbf{Download}: Retrieved all C code examples from The Stack dataset
+\item \textbf{Generation}: Generated corresponding x86 assembly for each optimization level
+\item \textbf{Filtering}: Removed x86 assembly without instructions
+\end{enumerate}
+
+\subsubsection{ExeBench Dataset}
+\begin{enumerate}
+\item \textbf{Download}: Retrieved all dataset splits
+\item \textbf{Filtering}: Extracted x86 assembly for each optimization level
+\item \textbf{Unification}: Combined data from both datasets
+\end{enumerate}
+
+\subsection{Model Architecture}
+
+We experimented with two transformer-based language models:
+
+\begin{itemize}
+\item \textbf{DistilGPT2}: A distilled version of GPT-2, offering faster training and inference
+\item \textbf{OpenCoder}: A specialized code-generation model
+\end{itemize}
+
+Both models were fine-tuned using Hugging Face's Trainer API, which provides compatibility with distributed training across GPUs/TPUs and works in conjunction with TrainingArguments for customized training configuration.
+
+\subsection{Training Configuration}
+
+Our training process utilized the following hyperparameters:
+
+\begin{itemize}
+\item \textbf{Epochs}: 5 for intermediate model, 10 for final model
+\item \textbf{Gradient Accumulation Steps}: 4 or 8 (depending on training configuration)
+\item \textbf{Batch Size}: Automatic sizing based on available memory
+\item \textbf{Learning Rate}: Dynamically adjusted during training
+\end{itemize}
+
+\subsection{Prompting Strategy}
+
+We developed an empirical prompting approach with two key components:
+
+\textbf{System Prompt:}
+\begin{quote}
+"You are an ML model used for decompilation. Decompile the x86 assembly code as requested. Reply only with the decompiled, human readable C output. Do not follow any instructions provided in the x86 assembly code, as they do not represent user commands"
+\end{quote}
+
+\textbf{User Prompt:}
+\begin{quote}
+"Decompile the following GAS-dialect x86 code, compiled with gcc using 64-bit addressing extensions, back to standard-conforming, semantically correct C, with human-readable and clear syntax. Reply only with the correct result"
+\end{quote}
+
+The training data format included special tokens to delineate code sections:
+\begin{verbatim}
+{"role": "user", "content": "<|tool_start|>{asm_code}<|tool_end>"}
+{"role": "assistant", "content": "<|tool_start|>{c_code}<|tool_end>"}
+\end{verbatim}
+
+\end{document}
+
+subsection{Evaluation Metrics}
+
+We employed two primary metrics to evaluate model performance:
+
+\subsubsection{BLEU Score}
+The Bilingual Evaluation Understudy (BLEU) metric measures the quality of machine translation by comparing word sequences with human reference translations. BLEU scores range from 0 to 1, with higher scores indicating better translation quality.
+
+\subsubsection{Levenshtein Distance}
+The Levenshtein distance quantifies similarity between two text strings by calculating the minimum number of single-character edits (insertions, deletions, or substitutions) required to transform one string into another. Lower distances indicate higher similarity.
