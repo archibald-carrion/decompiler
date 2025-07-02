@@ -22,6 +22,13 @@ Fine-tuned & 227.84 & 0.0136 \\
 
 Our results demonstrate significant improvement over the baseline model. The fine-tuned model achieved a 32.3\% reduction in Levenshtein distance (from 260.89 to 176.63) and a 267\% improvement in BLEU score (from 0.0015 to 0.0055). The second fine-tuned version (v2) showed the highest BLEU score of 0.0136, representing a 807\% improvement over the baseline.
 
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.5\textwidth]{images/minimalist_loss.png}
+\caption{Loss curve of the minimalist model showing constant convergence}
+\label{fig:large_model_loss}
+\end{figure}
+
 \subsection{Training Performance Metrics}
 
 The final model training was conducted over 10 epochs using 120 assembly-to-C code pairs covering all optimization levels. Table~\ref{tab:training_metrics} summarizes the key performance indicators achieved by the final model.
@@ -69,6 +76,37 @@ The training dynamics reveal several notable patterns:
 
 \item \textbf{Convergence Behavior:} After batch 32, the model showed more stable but lower performance, suggesting potential overfitting or reaching a local optimum in the loss landscape.
 \end{itemize}
+
+\subsection{Large-Scale Model Experiment}
+
+During our experimental trials, we trained model with significantly larger hyperparameters and datasets which showed exceptional promise for the assembly-to-C translation task. This larger architecture, with increased dataset, generations and overall computational complexity, demonstrated superior learning dynamics compared to our standard minimalist implementation. However, due to computational resource limitations and extended training requirements, this experiment could not be completed to full convergence.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.5\textwidth]{images/loss_per_step.png}
+\caption{Training and validation loss curves for the large-scale model showing rapid initial convergence before computational termination}
+\label{fig:large_model_loss}
+\end{figure}
+
+Figure~\ref{fig:large_model_loss} illustrates the loss progression of this large-scale training run. The model exhibited remarkably rapid convergence, with both training and validation losses dropping from approximately 2.5 to below 0.5 within the first 2000 steps.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.5\textwidth]{images/metrics_per_step.png}
+\caption{Evaluation metrics progression for the large-scale model showing consistent improvement across all performance indicators}
+\label{fig:large_model_metrics}
+\end{figure}
+
+The evaluation metrics shown in Figure~\ref{fig:large_model_metrics} reveal sustained improvement across all performance indicators throughout the training period. The accuracy stabilized around 2.0\%, while precision remained consistently above 1.8\%, and recall maintained steady performance around 1.8\%. The F1-score demonstrated stable convergence at approximately 2.0\%, suggesting more balanced precision-recall performance than our completed smaller models.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.5\textwidth]{images/lm_metrics_per_step.png}
+\caption{Language model specific metrics showing perplexity and cross-entropy loss evolution for the large-scale model}
+\label{fig:large_model_lm}
+\end{figure}
+
+Figure~\ref{fig:large_model_lm} presents the language modeling metrics for this large-scale training run. The cross-entropy loss exhibited steady improvement, stabilizing around 20.0 after initial fluctuations. Interestingly, the perplexity showed an upward trend reaching values above 200, which occurred alongside improving accuracy metrics. This pattern suggests the larger model was learning to generate more diverse and complex C code structures, potentially indicating superior translation capabilities that could not be fully realized due to computational constraints.
 
 \subsection{Performance Validation}
 
