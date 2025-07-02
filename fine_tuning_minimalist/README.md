@@ -9,7 +9,7 @@ Open a WSL2 terminal in your project root and run:
 ```sh
 docker build -t decompiler-finetune ./fine_tuning_minimalist/
 
-docker run -it --rm -v $(pwd)/models:/app/models -v $(pwd)/data:/app/data decompiler-finetune:latest python decompilation_finetuning.py --train 
+docker run -it --rm -v $(pwd)/models:/app/models -v $(pwd)/data:/app/data decompiler-finetune:latest
 ```
 
 - The script will start fine-tuning using the data and model you provided.

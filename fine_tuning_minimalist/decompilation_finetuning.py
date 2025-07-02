@@ -24,10 +24,16 @@ import json
 import glob
 from torch.utils.data import DataLoader
 
+# Metrics and plotting
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report, confusion_matrix
+
 # Set local directory for model storage
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-BASE_MODEL_DIR = os.path.join(SCRIPT_DIR, "models", "decompiler_model")
-FINETUNED_MODEL_DIR = os.path.join(SCRIPT_DIR, "models", "decompiler_model_v2")
+BASE_MODEL_DIR = os.path.join(SCRIPT_DIR, "models", "distilgpt2")
+FINETUNED_MODEL_DIR = os.path.join(SCRIPT_DIR, "models", "decompiler_model")
 DATA_DIR = os.path.join(SCRIPT_DIR, "data")
 
 # Create directories if they don't exist
@@ -105,8 +111,8 @@ def load_assembly_c_pairs(data_dir=DATA_DIR, use_all_optimizations=True, specifi
     
     # Determine which optimization levels to process
     if use_all_optimizations:
-        optimization_levels = ["O0", "Ofast", "Osize"]
-        print("🔧 Processing ALL optimization levels (O0, Ofast, Osize)")
+        optimization_levels = ["O0", "Ofast", "Os"]
+        print("🔧 Processing ALL optimization levels (O0, Ofast, Os)")
     elif specific_optimization:
         optimization_levels = [specific_optimization]
         print(f"🔧 Processing only {specific_optimization} optimization level")
@@ -195,7 +201,7 @@ def load_assembly_c_pairs(data_dir=DATA_DIR, use_all_optimizations=True, specifi
         print(f"        <filename1>.s")
         print(f"        <filename2>.s")
         print(f"        ...")
-        print(f"      Osize/")
+        print(f"      Os/")
         print(f"        <filename1>.s")
         print(f"        <filename2>.s")
         print(f"        ...")
@@ -210,7 +216,7 @@ def load_assembly_c_pairs(data_dir=DATA_DIR, use_all_optimizations=True, specifi
         
         asm_base_dir = os.path.join(data_dir, "ASM")
         if os.path.exists(asm_base_dir):
-            for opt in ["O0", "Ofast", "Osize"]:
+            for opt in ["O0", "Ofast", "Os"]:
                 opt_dir = os.path.join(asm_base_dir, opt)
                 if os.path.exists(opt_dir):
                     asm_files = [f for f in os.listdir(opt_dir) if f.endswith('.s')]
@@ -276,9 +282,11 @@ def prepare_dataset(tokenizer, use_all_optimizations=True, specific_optimization
     print(f"✅ Dataset prepared with {len(tokenized_dataset)} examples")
     return tokenized_dataset
 
-def finetune_model(model, tokenizer, dataset, output_dir=FINETUNED_MODEL_DIR, epochs=5):
+def finetune_model(model, tokenizer, dataset, output_dir=FINETUNED_MODEL_DIR):
     """Fine-tune the model on assembly-to-C data"""
     print("🔧 Starting assembly decompiler fine-tuning...")
+
+    epochs = 2  # Hardcoded to 10 epochs because yes
     
     # Data collator for language modeling
     data_collator = DataCollatorForLanguageModeling(
@@ -290,12 +298,12 @@ def finetune_model(model, tokenizer, dataset, output_dir=FINETUNED_MODEL_DIR, ep
     training_args = TrainingArguments(
         output_dir=output_dir,
         overwrite_output_dir=True,
-        num_train_epochs=epochs,
+        num_train_epochs=epochs,  # Hardcoded to 10 epochs
         per_device_train_batch_size=2,  # Slightly larger batch size
         per_device_eval_batch_size=2,
         gradient_accumulation_steps=4,  # Simulate larger batch size
         warmup_steps=100,
-        prediction_loss_only=True,
+        prediction_loss_only=False,  # Enable full logging for loss plotting
         logging_dir=os.path.join(output_dir, "logs"),
         logging_steps=50,  # Log more frequently
         save_steps=500,
@@ -320,16 +328,16 @@ def finetune_model(model, tokenizer, dataset, output_dir=FINETUNED_MODEL_DIR, ep
     print(f"🚀 Training for {epochs} epochs on {len(dataset)} examples...")
     start_time = time.time()
     
-    trainer.train()
-    
+
+    train_result = trainer.train()
     training_time = time.time() - start_time
     print(f"✓ Training completed in {training_time:.2f} seconds")
-    
+
     # Save the fine-tuned model
     print(f"💾 Saving decompiler model to {output_dir}")
     trainer.save_model()
     tokenizer.save_pretrained(output_dir)
-    
+
     # Save training info
     training_info = {
         "base_model": "distilgpt2",
@@ -339,10 +347,147 @@ def finetune_model(model, tokenizer, dataset, output_dir=FINETUNED_MODEL_DIR, ep
         "training_time": training_time,
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
     }
-    
     with open(os.path.join(output_dir, "training_info.json"), "w") as f:
         json.dump(training_info, f, indent=2)
-    
+
+    # --- METRICS ---
+    print("\n📊 Calculating training metrics...")
+    # Store metrics per batch for plotting
+    metrics_history = {
+        'batch': [],
+        'accuracy': [],
+        'precision': [],
+        'recall': [],
+        'f1': [],
+        'cross_entropy': [],
+        'perplexity': []
+    }
+    all_labels = []
+    all_preds = []
+    all_losses = []
+    cross_entropy = torch.nn.CrossEntropyLoss(ignore_index=tokenizer.pad_token_id, reduction='none')
+    model.eval()
+    dataloader = DataLoader(dataset, batch_size=2, pin_memory=False)
+    # Set loss_type in model config to avoid warning
+    if hasattr(model, 'config'):
+        model.config.loss_type = 'ForCausalLMLoss'
+    batch_idx = 0
+    with torch.no_grad():
+        for batch in dataloader:
+            input_ids = batch['input_ids']
+            attention_mask = batch['attention_mask']
+            # Convert to torch tensors if they are lists (datasets.Dataset may return lists)
+            if isinstance(input_ids, list):
+                input_ids = torch.stack(input_ids)
+            if isinstance(attention_mask, list):
+                attention_mask = torch.stack(attention_mask)
+            labels = input_ids.clone()
+            outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
+            logits = outputs.logits
+            preds = torch.argmax(logits, dim=-1)
+            batch_labels = []
+            batch_preds = []
+            batch_losses = []
+            for i in range(input_ids.shape[0]):
+                mask = attention_mask[i].bool()
+                true = input_ids[i][mask].cpu().numpy()
+                pred = preds[i][mask].cpu().numpy()
+                batch_labels.extend(true)
+                batch_preds.extend(pred)
+                all_labels.extend(true)
+                all_preds.extend(pred)
+                ce_loss = cross_entropy(logits[i][mask], input_ids[i][mask])
+                batch_losses.extend(ce_loss.cpu().numpy())
+                all_losses.extend(ce_loss.cpu().numpy())
+            # Compute metrics for this batch
+            if len(batch_labels) > 0:
+                acc = accuracy_score(batch_labels, batch_preds)
+                prec = precision_score(batch_labels, batch_preds, average='weighted', zero_division=0)
+                rec = recall_score(batch_labels, batch_preds, average='weighted', zero_division=0)
+                f1v = f1_score(batch_labels, batch_preds, average='weighted', zero_division=0)
+                ce = float(np.mean(batch_losses))
+                ppl = float(np.exp(ce))
+                metrics_history['batch'].append(batch_idx)
+                metrics_history['accuracy'].append(acc)
+                metrics_history['precision'].append(prec)
+                metrics_history['recall'].append(rec)
+                metrics_history['f1'].append(f1v)
+                metrics_history['cross_entropy'].append(ce)
+                metrics_history['perplexity'].append(ppl)
+            batch_idx += 1
+
+    # Calculate overall metrics
+    accuracy = accuracy_score(all_labels, all_preds)
+    precision = precision_score(all_labels, all_preds, average='weighted', zero_division=0)
+    recall = recall_score(all_labels, all_preds, average='weighted', zero_division=0)
+    f1 = f1_score(all_labels, all_preds, average='weighted', zero_division=0)
+    avg_cross_entropy = float(np.mean(all_losses))
+    perplexity = float(np.exp(avg_cross_entropy))
+
+    metrics = {
+        "accuracy": accuracy,
+        "precision": precision,
+        "recall": recall,
+        "f1": f1,
+        "cross_entropy": avg_cross_entropy,
+        "perplexity": perplexity
+    }
+    print(json.dumps(metrics, indent=2))
+
+    # Save metrics to JSON and CSV
+    metrics_path = os.path.join(output_dir, "training_metrics.json")
+    with open(metrics_path, "w") as f:
+        json.dump(metrics, f, indent=2)
+    pd.DataFrame([metrics]).to_csv(os.path.join(output_dir, "training_metrics.csv"), index=False)
+
+    # Save per-batch metrics for plotting
+    metrics_df = pd.DataFrame(metrics_history)
+    metrics_df.to_csv(os.path.join(output_dir, "training_metrics_per_batch.csv"), index=False)
+
+    # Plot all metrics curves
+    plt.figure(figsize=(10, 7))
+    for metric in ['accuracy', 'precision', 'recall', 'f1', 'cross_entropy', 'perplexity']:
+        plt.plot(metrics_history['batch'], metrics_history[metric], label=metric)
+    plt.xlabel('Batch')
+    plt.ylabel('Metric Value')
+    plt.title('Training Metrics per Batch')
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, "metrics_curves.png"))
+    print(f"Metrics curves saved to {os.path.join(output_dir, 'metrics_curves.png')}")
+
+    # Plot loss curve if available
+    if 'loss' in train_result.metrics:
+        print(f"Final training loss: {train_result.metrics['loss']}")
+    else:
+        log_dir = os.path.join(output_dir, "logs")
+        loss_log = []
+        for root, dirs, files in os.walk(log_dir):
+            for file in files:
+                if file.endswith(".json"):
+                    with open(os.path.join(root, file), 'r') as f:
+                        for line in f:
+                            try:
+                                entry = json.loads(line)
+                                if 'loss' in entry:
+                                    loss_log.append((entry['step'], entry['loss']))
+                            except Exception:
+                                continue
+        if loss_log:
+            steps, losses = zip(*sorted(loss_log))
+            plt.figure(figsize=(8,5))
+            plt.plot(steps, losses, marker='o')
+            plt.xlabel('Step')
+            plt.ylabel('Loss')
+            plt.title('Training Loss Curve')
+            plt.grid(True)
+            plt.tight_layout()
+            plt.savefig(os.path.join(output_dir, "loss_curve.png"))
+            print(f"Loss curve saved to {os.path.join(output_dir, 'loss_curve.png')}")
+        else:
+            print("No loss log found for plotting.")
+
     print("✅ Decompiler model saved successfully!")
     return trainer
 
@@ -412,263 +557,42 @@ def decompile_assembly(model, tokenizer, device, assembly_code, max_length=512, 
     
     return c_code
 
-def test_decompiler():
-    """Test the decompiler with sample assembly files"""
-    model, tokenizer, device = load_decompiler_model()
-    
-    if model is None:
-        print("Please train the model first using --train")
-        return
-    
-    # Try to find test assembly files
-    test_files = []
-    for opt_level in ["O0", "Ofast", "Osize"]:
-        asm_dir = os.path.join(DATA_DIR, "ASM", opt_level)
-        if os.path.exists(asm_dir):
-            asm_files = glob.glob(os.path.join(asm_dir, "*.s"))[:3]  # Take first 3 files
-            test_files.extend([(f, opt_level) for f in asm_files])
-    
-    if not test_files:
-        print("No test assembly files found in data directory")
-        return
-    
-    print(f"\n🧪 Testing decompiler with {len(test_files)} files")
-    
-    for asm_file, opt_level in test_files[:3]:  # Test only first 3
-        base_name = os.path.splitext(os.path.basename(asm_file))[0]
-        print(f"\n{'='*80}")
-        print(f"Testing: {base_name} ({opt_level})")
-        print(f"{'='*80}")
-        
-        try:
-            with open(asm_file, 'r') as f:
-                assembly_code = f.read().strip()
-            
-            # Show original C if available
-            c_file = os.path.join(DATA_DIR, "C", f"{base_name}.c")
-            if os.path.exists(c_file):
-                with open(c_file, 'r') as f:
-                    original_c = f.read().strip()
-                print(f"\nOriginal C code:\n{original_c}")
-                print(f"\n{'-'*40}")
-            
-            decompile_assembly(model, tokenizer, device, assembly_code)
-            
-        except Exception as e:
-            print(f"Error processing {base_name}: {e}")
-
-def interactive_decompiler_mode():
-    """Interactive mode for decompiling assembly code"""
-    model, tokenizer, device = load_decompiler_model()
-    
-    if model is None:
-        print("Please train the model first using --train")
-        return
-    
-    print("\n🔧 Interactive Assembly Decompiler")
-    print("Enter assembly code (end with '---' on a new line, or type 'quit' to exit)")
-    print("-" * 60)
-    
-    while True:
-        try:
-            print("\nEnter assembly code:")
-            assembly_lines = []
-            
-            while True:
-                line = input()
-                if line.strip().lower() == 'quit':
-                    print("Goodbye!")
-                    return
-                elif line.strip() == '---':
-                    break
-                else:
-                    assembly_lines.append(line)
-            
-            if not assembly_lines:
-                print("No assembly code entered.")
-                continue
-            
-            assembly_code = '\n'.join(assembly_lines)
-            decompile_assembly(model, tokenizer, device, assembly_code)
-            
-        except KeyboardInterrupt:
-            print("\n\nGoodbye!")
-            break
-        except Exception as e:
-            print(f"Error: {e}")
-
-def show_model_info():
-    """Show information about available models"""
-    print("\n📊 Model Information")
-    print("=" * 40)
-    
-    # Base model info
-    if os.path.exists(BASE_MODEL_DIR):
-        base_size = sum(os.path.getsize(os.path.join(BASE_MODEL_DIR, f)) 
-                       for f in os.listdir(BASE_MODEL_DIR) 
-                       if os.path.isfile(os.path.join(BASE_MODEL_DIR, f)))
-        print(f"📁 Base Model: {base_size / (1024*1024):.1f} MB")
-    else:
-        print("📁 Base Model: Not downloaded")
-    
-    # Fine-tuned model info
-    if os.path.exists(FINETUNED_MODEL_DIR):
-        ft_size = sum(os.path.getsize(os.path.join(FINETUNED_MODEL_DIR, f)) 
-                     for f in os.listdir(FINETUNED_MODEL_DIR) 
-                     if os.path.isfile(os.path.join(FINETUNED_MODEL_DIR, f)))
-        print(f"🔧 Decompiler Model: {ft_size / (1024*1024):.1f} MB")
-        
-        # Show training info if available
-        info_file = os.path.join(FINETUNED_MODEL_DIR, "training_info.json")
-        if os.path.exists(info_file):
-            with open(info_file, 'r') as f:
-                training_info = json.load(f)
-            print(f"   📚 Training examples: {training_info['num_examples']}")
-            print(f"   🔄 Epochs: {training_info['epochs']}")
-            print(f"   ⏱️  Training time: {training_info['training_time']:.2f}s")
-            print(f"   📅 Trained: {training_info['timestamp']}")
-    else:
-        print("🔧 Decompiler Model: Not trained yet")
-    
-    # Data directory info
-    print(f"\n📂 Data Directory: {DATA_DIR}")
-    c_dir = os.path.join(DATA_DIR, "C")
-    if os.path.exists(c_dir):
-        c_files = len(glob.glob(os.path.join(c_dir, "*.c")))
-        print(f"   📄 C files: {c_files}")
-    
-    for opt_level in ["O0", "Ofast", "Osize"]:
-        asm_dir = os.path.join(DATA_DIR, "ASM", opt_level)
-        if os.path.exists(asm_dir):
-            asm_files = len(glob.glob(os.path.join(asm_dir, "*.s")))
-            print(f"   📄 {opt_level} assembly files: {asm_files}")
-
-def cleanup_models():
-    """Remove all model files"""
-    import shutil
-    
-    removed = []
-    if os.path.exists(BASE_MODEL_DIR):
-        shutil.rmtree(BASE_MODEL_DIR)
-        removed.append("Base model")
-    
-    if os.path.exists(FINETUNED_MODEL_DIR):
-        shutil.rmtree(FINETUNED_MODEL_DIR)
-        removed.append("Decompiler model")
-    
-    if removed:
-        print(f"✓ Removed: {', '.join(removed)}")
-    else:
-        print("No models to remove")
-
 def main():
-    parser = argparse.ArgumentParser(description='DistilGPT2 Assembly Decompiler Fine-tuning')
-    parser.add_argument('--train', action='store_true', help='Fine-tune model on assembly-to-C data')
-    parser.add_argument('--epochs', type=int, default=5, help='Number of training epochs')
-    parser.add_argument('--optimization', choices=['O0', 'Ofast', 'Osize', 'all'], default='all', 
-                       help='Assembly optimization level to use for training (default: all)')
-    parser.add_argument('--decompile', type=str, help='Path to assembly file to decompile')
-    parser.add_argument('--interactive', action='store_true', help='Interactive decompilation mode')
-    parser.add_argument('--test', action='store_true', help='Test decompiler with sample files')
-    parser.add_argument('--info', action='store_true', help='Show model and data information')
-    parser.add_argument('--cleanup', action='store_true', help='Remove all model files')
-    
-    args = parser.parse_args()
-    
+
     print("🔧 DistilGPT2 Assembly Decompiler")
     print("=" * 50)
-    
-    # Handle utility commands
-    if args.info:
-        show_model_info()
-        return
-    
-    if args.cleanup:
-        cleanup_models()
-        return
-    
+
     # Check requirements
     if not check_requirements():
         print("\n❌ Missing requirements. Please install them and try again.")
         print("Required: pip install transformers torch datasets")
         return
-    
-    # Training mode
-    if args.train:
-        try:
-            # Load base model
-            model, tokenizer = load_base_model()
-            
-            # Determine optimization level settings
-            use_all_optimizations = (args.optimization == 'all')
-            specific_optimization = None if use_all_optimizations else args.optimization
-            
-            # Prepare dataset
-            dataset = prepare_dataset(
-                tokenizer, 
-                use_all_optimizations=use_all_optimizations,
-                specific_optimization=specific_optimization
-            )
-            
-            if dataset is None:
-                print("❌ Failed to prepare dataset. Check your data directory structure.")
-                return
-            
-            # Fine-tune model
-            finetune_model(model, tokenizer, dataset, epochs=args.epochs)
-            
-            print("\n✅ Decompiler training completed successfully!")
-            print("Use --test, --interactive, or --decompile to test the model")
-            
-        except Exception as e:
-            print(f"❌ Training failed: {e}")
-            import traceback
-            traceback.print_exc()
-            return
-    
-    # Decompilation modes
-    elif args.decompile:
-        if not os.path.exists(args.decompile):
-            print(f"❌ Assembly file not found: {args.decompile}")
+
+    try:
+        # Load base model
+        model, tokenizer = load_base_model()
+
+        # Prepare dataset
+        dataset = prepare_dataset(
+            tokenizer, 
+            use_all_optimizations=True,
+            specific_optimization=None
+        )
+        
+        if dataset is None:
+            print("❌ Failed to prepare dataset. Check your data directory structure.")
             return
         
-        model, tokenizer, device = load_decompiler_model()
-        if model:
-            try:
-                with open(args.decompile, 'r') as f:
-                    assembly_code = f.read().strip()
-                decompile_assembly(model, tokenizer, device, assembly_code)
-            except Exception as e:
-                print(f"Error reading assembly file: {e}")
+        # Fine-tune model
+        finetune_model(model, tokenizer, dataset)
+        
+        print("\n✅ Decompiler training completed successfully!")
+        
+    except Exception as e:
+        print(f"❌ Training failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return
     
-    elif args.interactive:
-        interactive_decompiler_mode()
-    
-    elif args.test:
-        test_decompiler()
-    
-    else:
-        # Default: show help and model info
-        print("\n💡 Usage examples:")
-        print("  python script.py --train --optimization all      # Train on ALL optimization levels (recommended)")
-        print("  python script.py --train --optimization O0       # Train only on O0 optimized assembly")
-        print("  python script.py --test                          # Test with sample files")
-        print("  python script.py --interactive                   # Interactive decompilation")
-        print("  python script.py --decompile file.s              # Decompile specific file")
-        print("  python script.py --info                          # Show model and data info")
-        print("\nExpected data structure:")
-        print("  data/")
-        print("    C/")
-        print("      <file1>.c, <file2>.c, ...")
-        print("    ASM/")
-        print("      O0/")
-        print("        <file1>.s, <file2>.s, ...")
-        print("      Ofast/")
-        print("        <file1>.s, <file2>.s, ...")
-        print("      Osize/")
-        print("        <file1>.s, <file2>.s, ...")
-        print("\n🚀 Start with --train --optimization all to create the decompiler model using ALL your data!")
-        show_model_info()
-
 if __name__ == "__main__":
     main()

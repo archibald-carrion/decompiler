@@ -28,4 +28,4 @@ ENV PYTHONUNBUFFERED=1
 ENV HF_HOME=/app/cache
 
 # Default command - can be overridden
-CMD ["python", "decompilation_finetuning.py", "--help"]
+CMD ["python", "decompilation_finetuning.py"]

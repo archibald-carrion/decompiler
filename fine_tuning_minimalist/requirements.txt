@@ -1,3 +1,10 @@
+transformers>=4.0.0
+torch>=1.7.0
+datasets>=2.0.0
+numpy>=1.19.0
+pandas>=1.1.0
+matplotlib>=3.3.0
+scikit-learn>=0.24.0
 # Core ML dependencies
 torch>=2.0.0
 transformers>=4.30.0
