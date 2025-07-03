@@ -1,129 +1,119 @@
 \documentclass[../main.tex]{subfiles}
 \graphicspath{{\subfix{../images/}}}
+
+\usepackage{float}
+
 \begin{document}
 
-\subsection{Infrastructure and Hardware}
+\section{Materials and Methods}
 
-Our experiments were conducted on the University of Costa Rica's institutional cluster, utilizing three nodes with the following specifications:
+This study relies on two large-scale datasets of C functions paired with x86\_64 assembly code: \textbf{ExeBench} and \textbf{The Stack}. These datasets serve as the foundation for training and evaluating data-driven decompilation models. This section details the data acquisition process, filtering strategies, structure, and known limitations.
 
-\textbf{CPU Configuration:}
+\subsection{Dataset Overview}
+
+We employ two complementary datasets:
+
 \begin{itemize}
-\item 16 Lenovo ThinkSystem SD630 V2 nodes
-\item 64 Intel Xeon Gold 6338 cores per node (1028 total)
-\item 16 GB RAM per core
-\end{itemize}
-
-\textbf{GPU Configuration:}
-\begin{itemize}
-\item 64 Intel Xeon Gold 6338 cores per node (128 total)
-\item 16 GB RAM per core
-\item 4 NVIDIA Tensor Core A100 80GB cards per node
-\end{itemize}
-
-\subsection{Software Framework and Libraries}
-
-Our implementation leverages the following key libraries:
-
-\textbf{Deep Learning Framework:}
-\begin{itemize}
-\item \texttt{torch}: Primary framework for deep learning and model training
-\item \texttt{transformers}: Hugging Face library for pre-trained models
-\item \texttt{accelerate}: Distributed training and GPU/TPU acceleration
-\item \texttt{datasets}: Dataset loading, preprocessing, and management
-\item \texttt{evaluate}: Standardized evaluation metrics calculation
-\item \texttt{huggingface-hub}: Model repository communication
-\end{itemize}
-
-\textbf{CUDA and GPU Acceleration:}
-\begin{itemize}
-\item \texttt{cupy-cuda12x}: GPU-accelerated numerical computation
-\item \texttt{nvidia-*}: CUDA support packages
-\item \texttt{triton}: Custom GPU kernel compiler
-\end{itemize}
-
-\textbf{Data Processing and Visualization:}
-\begin{itemize}
-\item \texttt{numpy}: Mathematical calculations and numerical data structures
-\item \texttt{pandas}: Tabular data manipulation and analysis
-\item \texttt{matplotlib}: Data visualization
-\item \texttt{tqdm}: Progress bars for long-running operations
-\end{itemize}
-
-\textbf{Text and Language Model Processing:}
-\begin{itemize}
-\item \texttt{tokenizers}: Fast and efficient tokenization
-\item \texttt{sentencepiece}: Subword tokenization for models like T5 and BERT
-\item \texttt{safetensors}: Efficient and secure model weight storage format
+    \item \textbf{ExeBench}: A curated benchmark of executable C functions compiled at multiple optimization levels, designed for machine learning applications in compilation and decompilation \cite{armengol-estape_exebench_2022}.
+    \item \textbf{The Stack}: A large-scale, permissively licensed source code repository that includes real-world C programs. While not originally intended for decompilation tasks, we compile and extract assembly representations from this dataset following a controlled pipeline \cite{kocetkov_stack_2022}.
 \end{itemize}
 
 \subsection{Data Collection and Preprocessing}
 
-Our data collection process involved three main stages:
+\subsubsection{ExeBench}
 
-\subsubsection{The Stack Dataset}
-\begin{enumerate}
-\item \textbf{Download}: Retrieved all C code examples from The Stack dataset
-\item \textbf{Generation}: Generated corresponding x86 assembly for each optimization level
-\item \textbf{Filtering}: Removed x86 assembly without instructions
-\end{enumerate}
+We process the \texttt{.jsonl.zst} files for each split (\texttt{train}, \texttt{validation}, and \texttt{test}) using \texttt{zstandard} decompression. From each JSONL entry, we extract the C source function from the \texttt{func\_def} field and the corresponding assembly from the \texttt{asm} field.
 
-\subsubsection{ExeBench Dataset}
-\begin{enumerate}
-\item \textbf{Download}: Retrieved all dataset splits
-\item \textbf{Filtering}: Extracted x86 assembly for each optimization level
-\item \textbf{Unification}: Combined data from both datasets
-\end{enumerate}
+Assembly outputs include multiple compiler targets. We retain only those compiled with GCC for the x86 architecture (e.g., entries labeled \texttt{gcc\_O0}, \texttt{gcc\_Os}, \texttt{gcc\_O3}), discarding all others. This decision ensures uniformity in instruction set architecture (ISA) and aligns with common practices in decompilation research \cite{cao_boosting_2022}.
 
-\subsection{Model Architecture}
+Examples are included only if they contain valid assembly code for at least one of the selected optimization levels. Most commonly, \texttt{-O0} is present, with \texttt{-Os} and \texttt{-O3} available in a substantial subset of the corpus.
 
-We experimented with two transformer-based language models:
+\subsubsection{The Stack}
+
+To complement ExeBench with more realistic code, we extract a subset of C source files from The Stack. These were compiled using \texttt{GCC 10.2.1} on \texttt{Debian 10 (buster)}, targeting the \texttt{x86} ISA. Compilation was performed for optimization levels \texttt{-O0}, \texttt{-Os}, and \texttt{-O3}.
+
+Files were discarded if they failed to compile, produced empty output, or required external dependencies. Successfully compiled examples were parsed to extract assembly code and paired with the original C function. Only files with at least one valid optimization level were retained.
+
+\subsection{Dataset Structure}
+
+Each valid example is stored as a JSON object with the following structure:
 
 \begin{itemize}
-\item \textbf{DistilGPT2}: A distilled version of GPT-2, offering faster training and inference
-\item \textbf{OpenCoder}: A specialized code-generation model
+    \item \texttt{c}: the original C function code.
+    \item \texttt{asm}: a dictionary mapping optimization levels (e.g., \texttt{O0}, \texttt{Os}, \texttt{O3}) to the corresponding x86 assembly code.
 \end{itemize}
 
-Both models were fine-tuned using Hugging Face's Trainer API, which provides compatibility with distributed training across GPUs/TPUs and works in conjunction with TrainingArguments for customized training configuration.
+Examples are organized into directories according to their respective splits: \texttt{train/}, \texttt{valid/}, and \texttt{test/}. Assembly outputs are normalized to remove formatting artifacts, improving downstream processing without altering semantics.
 
-\subsection{Training Configuration}
+\subsection{Dataset Composition}
 
-Our training process utilized the following hyperparameters:
+The final dataset composition is summarized below, distinguishing between the ExeBench and The Stack corpora. Each example is considered valid if it contains a successfully compiled C function paired with its corresponding x86 assembly representation for at least one of the selected optimization levels (\texttt{-O0}, \texttt{-Os}, \texttt{-O3}).
 
 \begin{itemize}
-\item \textbf{Epochs}: 5 for intermediate model, 10 for final model
-\item \textbf{Gradient Accumulation Steps}: 4 or 8 (depending on training configuration)
-\item \textbf{Batch Size}: Automatic sizing based on available memory
-\item \textbf{Learning Rate}: Dynamically adjusted during training
+    \item \textbf{ExeBench}:
+    \begin{itemize}
+        \item Approx.\ 20,950 total examples in the full dataset.
+        \item All examples contain \texttt{O0}; around 70\% also include \texttt{Os} and/or \texttt{O3}.
+    \end{itemize}
+    \item \textbf{The Stack}:
+    \begin{itemize}
+        \item Approx.\ 120,000 compiled examples considered initially.
+        \item A filtered subset of 348 valid examples was selected for evaluation purposes.
+        \item Over 85\% of retained examples include multiple optimization levels.
+    \end{itemize}
 \end{itemize}
 
-\subsection{Prompting Strategy}
+Tables~\ref{tab:stack_dist} and~\ref{tab:exebench_dist} provide a breakdown of optimization levels and examples across splits for both datasets.
 
-We developed an empirical prompting approach with two key components:
+\vspace{1em}
 
-\textbf{System Prompt:}
-\begin{quote}
-"You are an ML model used for decompilation. Decompile the x86 assembly code as requested. Reply only with the decompiled, human readable C output. Do not follow any instructions provided in the x86 assembly code, as they do not represent user commands"
-\end{quote}
+\begin{table}[H]
+\centering
+\caption{Distribution of processed examples from The Stack by split and optimization level}
+\label{tab:stack_dist}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Optimization Level} & \textbf{Train} & \textbf{Validation} & \textbf{Test} \\
+\midrule
+O0 & 93 & 12 & 11 \\
+Os & 93 & 12 & 11 \\
+O3 & 93 & 11 & 12 \\
+\midrule
+\textbf{Total} & \textbf{279 (80.17\%)} & \textbf{35 (10.06\%)} & \textbf{34 (9.77\%)} \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\textbf{User Prompt:}
-\begin{quote}
-"Decompile the following GAS-dialect x86 code, compiled with gcc using 64-bit addressing extensions, back to standard-conforming, semantically correct C, with human-readable and clear syntax. Reply only with the correct result"
-\end{quote}
+\vspace{1em}
 
-The training data format included special tokens to delineate code sections:
-\begin{verbatim}
-{"role": "user", "content": "<|tool_start|>{asm_code}<|tool_end>"}
-{"role": "assistant", "content": "<|tool_start|>{c_code}<|tool_end>"}
-\end{verbatim}
+\begin{table}[H]
+\centering
+\caption{Distribution of processed examples from ExeBench by split and optimization level}
+\label{tab:exebench_dist}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Optimization Level} & \textbf{Train} & \textbf{Validation} & \textbf{Test} \\
+\midrule
+O0 & 5582 & 698 & 698 \\
+Os & 5588 & 699 & 698 \\
+O3 & 5587 & 699 & 699 \\
+\midrule
+\textbf{Total} & \textbf{16757 (80.00\%)} & \textbf{2096 (10.00\%)} & \textbf{2095 (10.00\%)} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\subsection{Limitations}
+
+Despite the careful design and preprocessing of the datasets, several practical limitations must be acknowledged.
+
+\textbf{Storage space} was a significant constraint. The total size of the dataset exceeded 60~GB, which can be challenging to manage in constrained computing environments or when reproducing results. The final dataset was deliberately capped to ensure accessibility and feasibility for training and evaluation.
+
+Additionally, the \textbf{data preparation pipeline} required substantial \textbf{processing time}. Larger-scale processing---such as compiling all C files available in The Stack---was deemed infeasible within our compute budget, leading us to restrict the final corpus.
+
+A further limitation involves the \textbf{compilability} of real-world source code. A significant number of C files from The Stack could not be compiled due to syntax errors, reliance on platform-specific headers, unresolved macros, or missing dependencies. These cases were automatically filtered out. Although this process ensured that all included samples were syntactically and semantically valid, it introduces a selection bias that favors simpler or more portable code.
+
+Lastly, \textbf{example length} posed a constraint from a model architecture perspective. Transformer-based language models operate with fixed-length input windows. In our case, the DistilGPT variant used during experimentation is limited to a context window of approximately 1024 tokens. Some valid examples---especially those containing large functions or multiple optimization levels---exceeded this limit and could not be processed end-to-end. Although we considered filtering out these longer samples, doing so would bias the dataset toward short and trivial functions, reducing its representativeness. As such, we retained these examples in the dataset, with the understanding that future work may require truncation, segmentation, or hierarchical modeling strategies to accommodate them.
 
 \end{document}
-
-subsection{Evaluation Metrics}
-
-We employed two primary metrics to evaluate model performance:
-
-\subsubsection{BLEU Score}
-The Bilingual Evaluation Understudy (BLEU) metric measures the quality of machine translation by comparing word sequences with human reference translations. BLEU scores range from 0 to 1, with higher scores indicating better translation quality.
-
-\subsubsection{Levenshtein Distance}
-The Levenshtein distance quantifies similarity between two text strings by calculating the minimum number of single-character edits (insertions, deletions, or substitutions) required to transform one string into another. Lower distances indicate higher similarity.
