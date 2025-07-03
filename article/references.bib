@@ -268,3 +268,69 @@ Indirect branch instructions are often handled at instruction decode time. Delay
 	date = {2022},
 	keywords = {{FOS}: Computer and information sciences, Artificial Intelligence (cs.{AI}), Computation and Language (cs.{CL})},
 }
+
+@inproceedings{lin_reverse_2010,
+	author = {Lin, Zhiqiang and Zhang, Xiangyu and Xu, Dongyan},
+	title = {Automatic reverse engineering of data structures from binary execution},
+	year = {2010},
+	publisher = {CERIAS - Purdue University},
+	address = {West Lafayette, IN},
+	abstract = {With only the binary executable of a program, it is useful to discover the program's data structures and infer their syntactic and semantic definitions. Such knowledge is highly valuable in a variety of security and forensic applications. Although there exist efforts in program data structure inference, the existing solutions are not suitable for our targeted application scenarios. In this paper, we propose a reverse engineering technique to automatically reveal program data structures from binaries. Our technique, called REWARDS, is based on dynamic analysis. More specifically, each memory location accessed by the program is tagged with a timestamped type attribute. Following the program's runtime data flow, this attribute is propagated to other memory locations and registers that share the same type. During the propagation, a variable's type gets resolved if it is involved in a type-revealing execution point or type sink. More importantly, besides the forward type propagation, REWARDS involves a backward type resolution procedure where the types of some previously accessed variables get recursively resolved starting from a type sink. This procedure is constrained by the timestamps of relevant memory locations to disambiguate variables re-using the same memory location. In addition, REWARDS is able to reconstruct in-memory data structure layout based on the type information derived. We demonstrate that REWARDS provides unique benefits to two applications: memory image forensics and binary fuzzing for vulnerability discovery.},
+	booktitle = {Proceedings of the 11th Annual Information Security Symposium},
+	articleno = {5},
+	numpages = {1},
+	location = {West Lafayette, Indiana},
+	series = {CERIAS '10}
+}
+
+@article{DBLP:journals/corr/SutskeverVL14,
+	author = {Ilya Sutskever and Oriol Vinyals and Quoc V. Le},
+	title = {Sequence to Sequence Learning with Neural Networks},
+	journal = {CoRR},
+	volume = {abs/1409.3215},
+	year = {2014},
+	url = {http://arxiv.org/abs/1409.3215},
+	eprinttype = {arXiv},
+	eprint = {1409.3215},
+	timestamp = {Mon, 13 Aug 2018 16:48:06 +0200},
+	biburl = {https://dblp.org/rec/journals/corr/SutskeverVL14.bib},
+	bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@Online{dynmt,
+	year = {2017},
+	author = {Roee Aharoni},
+	title = {DyNMT, a DyNet based neural machine translation},
+	url = {https://github.com/roeeaharoni/dynmt-py},
+}
+
+@Online{hexrays,
+	urldate = {2025-07-02},
+	author = {{Hex-Rays}},
+	title = {IDA Decompilers},
+	url = {https://hex-rays.com/decompiler},
+}
+
+@Online{ghidra,
+	urldate = {2025-07-02},
+	author = {{National Security Agency}},
+	title = {Ghidra Software Reverse Engineering Framework},
+	url = {https://github.com/NationalSecurityAgency/ghidra},
+}
+
+@Online{retdec,
+	urldate = {2025-07-02},
+	author = {{Avast Software}},
+	title = {RetDec},
+	url = {https://github.com/avast/retdec},
+}
+
+@misc{ren2020codebleumethodautomaticevaluation,
+	title={CodeBLEU: a Method for Automatic Evaluation of Code Synthesis}, 
+	author={Shuo Ren and Daya Guo and Shuai Lu and Long Zhou and Shujie Liu and Duyu Tang and Neel Sundaresan and Ming Zhou and Ambrosio Blanco and Shuai Ma},
+	year={2020},
+	eprint={2009.10297},
+	archivePrefix={arXiv},
+	primaryClass={cs.SE},
+	url={https://arxiv.org/abs/2009.10297}, 
+}
