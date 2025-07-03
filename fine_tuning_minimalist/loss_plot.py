@@ -179,16 +179,6 @@ plt.gca().spines['bottom'].set_color('#333333')
 plt.xlim(0, 10.5)
 plt.ylim(0, max(losses) * 1.1)
 
-# Add annotations for key points
-min_loss_idx = losses.index(min(losses))
-min_loss_epoch = epochs[min_loss_idx]
-min_loss_value = losses[min_loss_idx]
-
-plt.annotate(f'Min Loss: {min_loss_value:.4f}\nEpoch: {min_loss_epoch:.2f}', 
-             xy=(min_loss_epoch, min_loss_value), 
-             xytext=(min_loss_epoch + 1, min_loss_value + 0.5),
-             arrowprops=dict(facecolor='black', shrink=0.05),
-                fontsize=10, color='black', bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
 
 # Show the plot
 plt.tight_layout()
