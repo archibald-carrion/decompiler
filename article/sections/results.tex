@@ -79,6 +79,34 @@ The training dynamics reveal several notable patterns:
 
 \subsection{Large-Scale Model Experiment}
 
+\begin{table}[htbp]
+\centering
+\caption{Large-Scale Model Training and Evaluation Metrics}
+\label{tab:training_and_evaluation_metrics}
+\begin{tabular}{lc}
+\toprule
+\textbf{Metric/Parameter} & \textbf{Value} \\
+\midrule
+\multicolumn{2}{l}{\textbf{Evaluation Metrics}} \\
+Accuracy & $0.020$ \\
+Precision & $0.020$ \\
+Recall & $0.018$ \\
+F1-Score & $0.019$ \\
+Cross-Entropy Loss & $21.526$ \\
+Perplexity & $2.23 \times 10^9$ \\
+\addlinespace
+\multicolumn{2}{l}{\textbf{Training Process Details}} \\
+Epochs & $35.0$ \\
+Steps & $9344$ \\
+Training Runtime (seconds) & $20271.39$ \\
+Training Samples/Second & $29.414$ \\
+Training Steps/Second & $0.461$ \\
+Training Loss (Epoch 35) & $0.263$ \\
+Validation Loss (Final) & $0.324$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 During our experimental trials, we trained model with significantly larger hyperparameters and datasets which showed exceptional promise for the assembly-to-C translation task. This larger architecture, with increased dataset, generations and overall computational complexity, demonstrated superior learning dynamics compared to our standard minimalist implementation. However, due to computational resource limitations and extended training requirements, this experiment could not be completed to full convergence.
 
 \begin{figure}[htbp]
