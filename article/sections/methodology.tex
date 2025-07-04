@@ -20,6 +20,9 @@ We employ two complementary datasets:
 
 \subsection{Data Collection and Preprocessing}
 
+We collected examples by filterig x86 and C pairs from Exebench, and generating x86 inputs from The Stack. 
+An overview of our process is illustrated by figure \ref{fig:data_gen_pipeline}
+
 \subsubsection{ExeBench}
 
 We process the \texttt{.jsonl.zst} files for each split (\texttt{train}, \texttt{validation}, and \texttt{test}) using \texttt{zstandard} decompression. From each JSONL entry, we extract the C source function from the \texttt{func\_def} field and the corresponding assembly from the \texttt{asm} field.
@@ -33,6 +36,13 @@ Examples are included only if they contain valid assembly code for at least one 
 To complement ExeBench with more realistic code, we extract a subset of C source files from The Stack. These were compiled using \texttt{GCC 10.2.1} on \texttt{Debian 10 (buster)}, targeting the \texttt{x86} ISA. Compilation was performed for optimization levels \texttt{-O0}, \texttt{-Os}, and \texttt{-O3}.
 
 Files were discarded if they failed to compile, produced empty output, or required external dependencies. Successfully compiled examples were parsed to extract assembly code and paired with the original C function. Only files with at least one valid optimization level were retained.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.5\textwidth]{images/data_gen_pipeline.png}
+\caption{Data generation and preprocessing pipeline overview}
+\label{fig:data_gen_pipeline}
+\end{figure}
 
 \subsection{Dataset Structure}
 
