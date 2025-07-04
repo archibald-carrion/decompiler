@@ -1,0 +1,32 @@
+\documentclass[../main.tex]{subfiles}
+\graphicspath{{\subfix{../images/}}}
+\begin{document}
+
+The results indicate that fine-tuning transformer models on domain-specific 
+assembly-to-C translation tasks yields substantial improvements in decompilation
+quality. 
+The reduction in Levenshtein distance suggests that our "minimalist" model generates
+C code  that is structurally closer to the ground truth, while the improved BLEU
+scores indicate better semantic alignment.
+
+Further attempts on similar setups should make note of our current limitations:
+\begin{itemize}
+\item The model performance is evaluated on specific compiler optimizations and
+may not generalize to all optimization levels; make sure to propsoe balanced 
+splits and account for bias
+\item The model of choice is not the preferred choice on state-of-the-art literature;
+opt for encoder-decoder architectures and attention mechanisms, perhaps even GNNs
+to better capture dependencies in control and data flows for low-level input code 
+and ASTs for high-level code outputs. 
+\item The maximum length for text for single-source inputs and outputs is considerably
+limited, limited even further to make room for the text prompt fed to the model;
+opt to filter out examples which may not fit completely into the model or attempt
+to fine-tune models with larger input and output sizes
+\item There was limited evaluation on complex control flow structures and advanced C 
+language features; opt for CodeBLEU, R2I and edit distance
+\end{itemize}
+
+We hipothesize that perhaps opting for different model architectures may improve
+output quality for generated high-level code, as mentioned on section \ref{introduction} 
+
+\end{document}

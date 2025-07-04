@@ -1,0 +1,38 @@
+\documentclass[../main.tex]{subfiles}
+\graphicspath{{\subfix{../images/}}}
+\begin{document}
+
+Both of our approaches show mixed results. Both figures \ref{fig:minimalist_model_loss}
+and \ref{fig:large_model_loss} showcase improvement on the models' prediction 
+capability on the training split over time. In particular figure \ref{fig:large_model_loss}
+showcases a steep loss decrease curve, avoiding particularly overfitting the validation
+split.
+
+Nevertheless, the recall, precision, and $f_1$ measures were very poor on both setups. 
+Figure \ref{fig:large_model_metrics} showcases them settling around a score of $2\%$
+for the large fine-tuning setup. Even worse, figure \ref{fig:images/training_curves.png}
+showcases unstable progress for these metrics in the "minimalist" setup, peaking 
+at around $0.6\%$ for precision, $0.4\%$ for recall and $0.45\%$ for the $f_1$ 
+score. Granted, these metrics were collected by evaluating the model on one batch
+at a time, but one would still expect certain uniformity to appear.
+
+The metrics collected after training are not very promising for both setups. Table
+\ref{tab:training_metrics} showcases very poor performance on the "minimalist" setup
+model after training. Even worse, table \ref{tab:training_and_evaluation_metrics} 
+demonstrates significantly worse metrics on the "large-scale" setup — smaller by
+an order of magnitude even, except for perplexity, which is many orders of magnitude
+larger and exemplifies more uncertainty for predicting tokens on average.
+
+These observations suggest that fine-tuning the model on a large-scale yielded a
+lesser performant LLM for decompilation. Experimental conditions and errors in 
+implementation may be to blame. It may also be the case that a considerable amount
+of examples were trimmed considerably or possibly entirely due to the maximum input
+length for the model.
+
+Nevertheless, there is slight improvement for the "minimalist" setup fine-tuned 
+model in comparison to the base model, as suggested by Levenshtein distance and
+the BLEU score displayed on table \ref{tab:results}. Further attempts to improving
+the experimental setups should consider collecting CodeBLEU \cite{ren2020codebleumethodautomaticevaluation}
+and R2I \cite{eom_r2i_2024} scores for judging decompiler quality.
+
+\end{document}

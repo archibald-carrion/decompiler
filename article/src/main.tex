@@ -1,0 +1,90 @@
+\documentclass[conference]{IEEEtran} % IEEE conference paper formatting
+
+% Miscellaneous packages
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{graphicx}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{float}
+
+% Bibliography
+\usepackage[backend=biber,style=ieee,sorting=ynt]{biblatex} % ... formatting
+\addbibresource{references.bib} % ... sources
+
+% External file resolution
+\usepackage{subfiles}
+
+\title{A Machine Learning Based Decompiler for x86 Assembly to C Code Translation}
+
+\author{
+\IEEEauthorblockN{Archibald Emmanuel Carrion Claeys\IEEEauthorrefmark{1}, 
+Fernando Arce Castillo\IEEEauthorrefmark{2}, 
+Javier Alfredo Solano Saltachín\IEEEauthorrefmark{3}}
+\IEEEauthorblockA{University of Costa Rica\\
+San José, Costa Rica\\
+Email: \IEEEauthorrefmark{1}archibald.carrion@ucr.ac.cr, 
+\IEEEauthorrefmark{2}fernando.arce@ucr.ac.cr, 
+\IEEEauthorrefmark{3}javier.solanosaltachin@ucr.ac.cr}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This paper presents a machine learning-based approach to decompile x86 assembly code
+(with 64-bit-adressing extensions) back to human-readable C source code. 
+We leverage transformer-based language models, specifically DistilGPT2, datasets
+from large source-code datasets like The Stack and Exebench, and common metrics for
+Large Language Models. 
+Our approach uses a fine-tuned model trained on the University of Costa Rica's 
+institutional cluster with specialized GPU acceleration. 
+The system demonstrates improved performance over baseline models, achieving a
+Levenshtein distance of $176.63$ and BLEU score of $0.0055$ for the fine-tuned version
+compared to the baseline's $260.89$ and $0.0015$ respectively. Nevertheless, other
+metrics like recall, precision, categorical cross-entropy loss, the $f_1$ score and
+perplexity appear to be very poor. 
+This work contributes to automated reverse engineering and software analysis tools.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Machine Learning, Decompilation, Assembly Code, Transformer Models, Reverse Engineering, Code Translation
+\end{IEEEkeywords}
+
+\section{Introduction} \label{introduction}
+
+\subfile{sections/introduction}
+
+\section{Methodology} \label{methodology}
+
+\subfile{sections/methodology}
+
+\section{Results} \label{results}
+
+\subfile{sections/results}
+
+\section{Conclusions} \label{conclusions}
+
+\subfile{sections/conclusion}
+
+\section{Discussion} \label{discussion}
+
+\subfile{sections/discussion}
+
+\section{Acknowledgments} \label{acknowledgments}
+
+The authors thank the University of Costa Rica for providing access to the institutional
+High-Perfomance Computing (HPC) cluster. The computational resources and infrastructure
+support were essential for conducting this research.
+
+\section{Availability} \label{availability}
+
+The source code and implementation details are available at: \\
+\url{https://github.com/archibald-carrion/decompiler.git}
+
+\printbibliography[title={References}]
+
+\end{document}

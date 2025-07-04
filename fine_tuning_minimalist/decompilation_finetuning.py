@@ -26,8 +26,8 @@ from torch.utils.data import DataLoader
 
 # Set local directory for model storage
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-BASE_MODEL_DIR = os.path.join(SCRIPT_DIR, "models", "distilgpt2")
-FINETUNED_MODEL_DIR = os.path.join(SCRIPT_DIR, "models", "decompiler_model")
+BASE_MODEL_DIR = os.path.join(SCRIPT_DIR, "models", "decompiler_model")
+FINETUNED_MODEL_DIR = os.path.join(SCRIPT_DIR, "models", "decompiler_model_v2")
 DATA_DIR = os.path.join(SCRIPT_DIR, "data")
 
 # Create directories if they don't exist
