@@ -14,13 +14,13 @@ Table~\ref{tab:results} presents the comparative performance of our models acros
 \toprule
 \textbf{Model} & \textbf{Levenshtein Distance} & \textbf{BLEU Score} \\
 \midrule
-Base Model & 260.89 & 0.0015 \\
-Fine-tuned (minimalist) & 227.84 & 0.0136 \\
+Base Model (pre-trained) & 260.89 & 0.0015 \\
+Fine-tuned (minimalist) & 176.63 & 0.0055 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Our results demonstrate significant improvement over the baseline model. The fine-tuned model achieved a 32.3\% reduction in Levenshtein distance (from 260.89 to 176.63) and a 267\% improvement in BLEU score (from 0.0015 to 0.0055). The second fine-tuned version (v2) showed the highest BLEU score of 0.0136, representing a 807\% improvement over the baseline.
+Our results demonstrate significant improvement over the baseline model. The fine-tuned model achieved a 32.3\% reduction in Levenshtein distance (from 260.89 to 176.63) and a 267\% improvement in BLEU score (from 0.0015 to 0.0055).
 
 \begin{figure}[htbp]
 \centering
@@ -146,10 +146,11 @@ When compared to the baseline results, our fine-tuned model shows substantial im
 
 \begin{itemize}
 \item The 32.3\% reduction in Levenshtein distance indicates that the generated C code is structurally closer to the reference implementations.
-\item The 807\% improvement in BLEU score for the finetuned model demonstrates enhanced semantic similarity between generated and target code.
+\item The 267\% improvement in BLEU score for the finetuned model demonstrates enhanced semantic similarity between generated and target code.
 \item The progression from base model to fine-tuned shows consistent improvement in translation quality metrics.
 \end{itemize}
 
-These results validate the effectiveness of our fine-tuning approach for the assembly-to-C translation task, despite the inherent challenges in cross-language code generation.
+These results validate some degree of effectiveness in our "minimalist" fine-tuning approach for the assembly-to-C translation task, despite the inherent challenges in cross-language code generation.
+The large-scale setup, however, doesn't yield promising results.
 
 \end{document}
