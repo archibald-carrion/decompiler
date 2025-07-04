@@ -35,10 +35,18 @@ Email: \IEEEauthorrefmark{1}archibald.carrion@ucr.ac.cr,
 \maketitle
 
 \begin{abstract}
-This paper presents a machine learning-based approach to decompile x86 assembly code (with 64-bit extensions) back to human-readable C source code. 
-We leverage transformer-based language models, specifically DistilGPT2 and OpenCoder, trained on datasets from The Stack and exebench. 
-Our approach uses a fine-tuned model trained on the University of Costa Rica's institutional cluster with specialized GPU acceleration. 
-The system demonstrates improved performance over baseline models, achieving a Levenshtein distance of 176.63 and BLEU score of 0.0055 for the fine-tuned version compared to the baseline's 260.89 and 0.0015 respectively. 
+This paper presents a machine learning-based approach to decompile x86 assembly code
+(with 64-bit-adressing extensions) back to human-readable C source code. 
+We leverage transformer-based language models, specifically DistilGPT2, datasets
+from large source-code datasets like The Stack and Exebench, and common metrics for
+Large Language Models. 
+Our approach uses a fine-tuned model trained on the University of Costa Rica's 
+institutional cluster with specialized GPU acceleration. 
+The system demonstrates improved performance over baseline models, achieving a
+Levenshtein distance of $176.63$ and BLEU score of $0.0055$ for the fine-tuned version
+compared to the baseline's $260.89$ and $0.0015$ respectively. Nevertheless, other
+metrics like recall, precision, categorical cross-entropy loss, the $f_1$ score and
+perplexity appear to be very poor. 
 This work contributes to automated reverse engineering and software analysis tools.
 \end{abstract}
 
@@ -58,13 +66,19 @@ Machine Learning, Decompilation, Assembly Code, Transformer Models, Reverse Engi
 
 \subfile{sections/results}
 
+\section{Conclusions} \label{conclusions}
+
+\subfile{sections/conclusion}
+
 \section{Discussion} \label{discussion}
 
 \subfile{sections/discussion}
 
 \section{Acknowledgments} \label{acknowledgments}
 
-The authors thank the University of Costa Rica for providing access to the institutional computing cluster. The %computational resources and infrastructure support were essential for conducting this research.
+The authors thank the University of Costa Rica for providing access to the institutional
+High-Perfomance Computing (HPC) cluster. The computational resources and infrastructure
+support were essential for conducting this research.
 
 \section{Availability} \label{availability}
 
