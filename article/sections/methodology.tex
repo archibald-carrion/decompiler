@@ -1,6 +1,8 @@
 \documentclass[../main.tex]{subfiles}
 \graphicspath{{\subfix{../images/}}}
 
+\usepackage{float}
+
 \begin{document}
 
 \section{Materials and Methods}
@@ -113,5 +115,89 @@ Additionally, the \textbf{data preparation pipeline} required substantial \textb
 A further limitation involves the \textbf{compilability} of real-world source code. A significant number of C files from The Stack could not be compiled due to syntax errors, reliance on platform-specific headers, unresolved macros, or missing dependencies. These cases were automatically filtered out. Although this process ensured that all included samples were syntactically and semantically valid, it introduces a selection bias that favors simpler or more portable code.
 
 Lastly, \textbf{example length} posed a constraint from a model architecture perspective. Transformer-based language models operate with fixed-length input windows. In our case, the DistilGPT variant used during experimentation is limited to a context window of approximately 1024 tokens. Some valid examples---especially those containing large functions or multiple optimization levels---exceeded this limit and could not be processed end-to-end. Although we considered filtering out these longer samples, doing so would bias the dataset toward short and trivial functions, reducing its representativeness. As such, we retained these examples in the dataset, with the understanding that future work may require truncation, segmentation, or hierarchical modeling strategies to accommodate them.
+
+\subsection{Model}
+
+\begin{itemize}
+  \item \textbf{Problem formulation:}  
+    Assembly‑to‑C decompilation is cast as a \emph{causal autoregressive} language‑modeling task. At each timestep \(t\) the DistilGPT2 model predicts the next token \(w_t\) in the target C sequence conditioned on the full assembly prompt and all previously generated C tokens:
+    \[
+      p(x) \;=\;\prod_{t=1}^{T} p_\theta(w_t \mid w_{<t})\,.
+    \]
+
+  \item \textbf{Architecture and pretrained weights:}  
+    We fine‑tune \emph{DistilGPT2}, a 6‑layer, 82 M‑parameter distilled variant of GPT‑2, chosen for its moderate footprint and compatibility with our compute/storage constraints.
+
+  \item \textbf{Input:}  
+    Prompts employ a multi‑turn template (implemented in \texttt{model\_loading.py}), for example:
+    \begin{verbatim}
+    <|system|> You are a C decompiler model.
+    <|user|> Decompile this x86_64 assembly:
+    <|tool_start|> ...assembly tokens... <|tool_end|>
+    \end{verbatim}
+    Special tokens `<|tool_start|>`/`<|tool_end|>` clearly delimit the assembly block.
+
+  \item \textbf{Output:}  
+    After the `<|assistant|>` marker, the model generates the C source code:
+    \begin{verbatim}
+    <|assistant|> ...predicted C source code...
+    \end{verbatim}
+    Only these C tokens are unmasked and contribute to training.
+
+  \item \textbf{Loss function:}  
+    We use \emph{categorical cross‑entropy} with token‐level masking (implemented in \texttt{model\_evaluation.py}). Prompt and assembly tokens receive a sentinel label (–100) and are excluded; only C‑token positions incur loss:
+    \[
+      \mathcal{L} = -\!\!\sum_{t \in \mathcal{T}_C}\log p_\theta(w_t \mid w_{<t}).
+    \]
+
+  \item \textbf{Metrics:}  
+    A custom \texttt{BatchDecompilerMetrics} class collects:
+    \begin{itemize}
+      \item \emph{Token classification:} accuracy, precision, recall, F1‑score.
+      \item \emph{Language modeling:} cross‑entropy loss, perplexity.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Training}
+
+\begin{itemize}
+  \item \textbf{Sampling and splitting:}  
+    We stratify by dataset origin (ExeBench vs.\ The Stack) and by optimization level (O0, Os, O3). Each stratum is split 80/10/10 for train/validation/test, preserving the distribution of compile‑time flags across splits.
+
+  \item \textbf{Hyperparameters:}  
+    Configured via a \texttt{create\_training\_args()} helper:
+    \begin{itemize}
+      \item \emph{num\_train\_epochs}: user‑specified (5–10).  
+      \item \emph{learning\_rate}: 5e‑5 with 100 warmup steps.  
+      \item \emph{weight\_decay}: 0.01.  
+      \item \emph{gradient\_accumulation\_steps}: 8 for effective large batches.  
+      \item \emph{fp16}: enabled when CUDA is available.  
+      \item \emph{eval\_strategy}: “steps,” evaluating every 5\% of total steps.  
+    \end{itemize}
+
+  \item \textbf{Data collation:}  
+    We employ \texttt{DataCollatorForLanguageModeling} (with \texttt{mlm=False}) for causal LM batching, ensuring correct padding and attention masks.
+
+  \item \textbf{Compute environment:}  
+    Training runs under SLURM (see \texttt{test\_pretrained.slurm}) on GPU nodes:
+    \begin{itemize}
+      \item 2 × NVIDIA A100 80 GB per node, 64‑core Intel Xeon CPUs, 16 GB RAM/core.  
+      \item PyTorch, Hugging Face Transformers, Accelerate, CuPy.  
+      \item Memory monitoring hooks log both host and CUDA usage (\texttt{model\_training.py}).  
+      \item Checkpointing: resume from existing checkpoint if detected; save every 5\% steps with a total‐limit of 1.
+    \end{itemize}
+
+  \item \textbf{Metrics collection and visualization:}  
+    The \texttt{collect\_training\_metrics()} function parses the trainer’s history to produce:
+    \begin{itemize}
+      \item \emph{Loss vs.\ steps/epochs} plots (training/validation).  
+      \item \emph{Token metrics} over time (precision, recall, F1, accuracy).  
+      \item \emph{LM metrics} (perplexity and cross‑entropy).
+    \end{itemize}
+
+  \item \textbf{Memory optimizations:}  
+    The system logs virtual memory and CUDA allocations each step; uses gradient accumulation and mixed‑precision to fit large effective batch sizes on limited GPU memory.
+\end{itemize}
+
 
 \end{document}
